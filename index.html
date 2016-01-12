@@ -26,7 +26,7 @@ onload=function(){
   })
 
   div=document.createElement('div');
-  div.style.cssText="position:absolute;width:8px;height:8px;background:blue;left:5;top:5;border-radius:50%";
+  div.style.cssText="position:absolute;width:16px;height:16px;background:white;left:0;top:0;border-radius:50%";
   div.x=0.5;div.y=0.5;
   div.update=function(){
     this.style.transform='translate('+512*this.x+'px,'+512*this.y+'px)';
@@ -34,7 +34,6 @@ onload=function(){
   div.update();
   div.calc=function(){
     var arr=simulator.read(this.x*512|0,512-this.y*512|0,1,1);
-    window.arr=arr;
     this.x-=(arr[0]-0.5)*0.001*2;
     this.y+=(arr[1]-0.5)*0.001*2;
     this.x=(this.x+1)%1;
@@ -57,9 +56,11 @@ onload=function(){
     mouse.timer = setTimeout(function(){mouse.vx=mouse.vy=mouse.val=0;mouse.timer=null},40);
   }
   simulator = new WaveSimulator(512, renderer);
+  window.dtav=0;
   animate();
   function animate(){
     var r=0.01;
+    var t0=performance.now();
     div.calc();
     simulator.disturb({
       center: new THREE.Vector2(mouse.x, mouse.y),
@@ -75,9 +76,7 @@ onload=function(){
       scale: new THREE.Vector4(1,1,1,0.999),
       value: new THREE.Vector4(0,0,0,10*mouse.val)
     })
-    var t=performance.now();
     simulator.calc();
-    hoge=performance.now()-t;
     simulator.disturb({
       center: new THREE.Vector2(0.3,0.2),
       overwrite: 1,
@@ -93,6 +92,7 @@ onload=function(){
       value: new THREE.Vector4(0,0,0,0)
     })
     simulator.show();
+    dtav=0.95*dtav+0.05*(performance.now()-t0)
     requestAnimationFrame(animate);
   }
 }

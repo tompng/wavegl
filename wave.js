@@ -40,6 +40,7 @@ function WaveSimulator(width, renderer) {
   this.show = function(){
     mesh.material = showShader;
     showShader.uniforms.texture.value = this.wave;
+    showShader.uniforms.time.value = performance.now()/1000;
     renderer.render(scene, camera);
   }
   this.calc = function(){
@@ -66,7 +67,7 @@ WaveSimulator.shaderCode = function(func, name){
 }
 WaveSimulator.showShader = function(width){
   return new THREE.ShaderMaterial({
-    uniforms: {texture: {type: "t"}},
+    uniforms: {texture: {type: "t"},time: {type: 'f'}},
     defines: {WIDTH: width.toFixed(2)},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
@@ -80,6 +81,7 @@ WaveSimulator.showShader = function(width){
   */
   /*FRAG
   uniform sampler2D texture;
+  uniform float time;
   void main(){
     //vec4 uvha = texture2D(texture, gl_FragCoord.xy / WIDTH);
     vec4 uvhx0 = texture2D(texture, gl_FragCoord.xy/WIDTH-vec2(1,0)/WIDTH);
@@ -88,9 +90,10 @@ WaveSimulator.showShader = function(width){
     vec4 uvhy1 = texture2D(texture, gl_FragCoord.xy/WIDTH+vec2(0,1)/WIDTH);
     float dx=uvhx1.z-uvhx0.z+gl_FragCoord.x/WIDTH/30.0;
     float dy=uvhy1.z-uvhy0.z+gl_FragCoord.y/WIDTH/30.0;
-    float hoge=sin(200.*dx)*sin(200.*dy);
-    float fuga=sin(130.*dx+120.*dy)*sin(120.*dx-130.*dy);
-    float piyo=sin(60.*dx+80.*dy)*sin(80.*dx-60.*dy);
+    float dxt=dx-time*0.002,dyt=dy-time*0.001;
+    float hoge=sin(200.*dxt)*sin(200.*dyt);
+    float fuga=sin(130.*dxt+120.*dyt)*sin(120.*dxt-130.*dyt);
+    float piyo=sin(60.*dxt+80.*dyt)*sin(80.*dxt-60.*dyt);
     float aaa=sin(410.*dx+780.*dy)*sin(780.*dx-410.*dy);
     aaa=aaa*aaa;aaa=aaa*aaa;
     float bbb=sin(530.*dx+770.*dy)*sin(770.*dx-530.*dy);
@@ -99,8 +102,8 @@ WaveSimulator.showShader = function(width){
     ccc=ccc*ccc;ccc=ccc*ccc;
     float geso=aaa+bbb+ccc;geso=geso*geso;
     vec3 rgb=vec3(hoge,fuga,piyo);
-    rgb=0.8*rgb*rgb*rgb*rgb*rgb*rgb+0.04*vec3(1,1,1)*geso;
-    gl_FragColor.rgb = (rgb+dot(rgb,vec3(1,1,1))*vec3(1,1,1))/2.0;
+    rgb=0.8*rgb*rgb*rgb*rgb*rgb*rgb+0.08*vec3(1,1,1)*geso;
+    gl_FragColor.rgb = vec3(0,0,0.1)+(rgb+dot(rgb,vec3(1,1,1))*vec3(1,1,1))/2.0;
     //gl_FragColor.rgb=vec3((uvha.a-0.5)*10.0,1,1)*(0.5+(uvha.z-0.5)*2.0);
     gl_FragColor.a = 1.0;
   }
