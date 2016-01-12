@@ -1,0 +1,82 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<script src="three.min.js"></script>
+<script src="wave.js"></script>
+<script>
+
+onload=function(){
+  camera = new THREE.Camera();
+  camera.position.z = 1;
+  scene = new THREE.Scene();
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setClearColor(new THREE.Color(0x0000ff));
+  renderer.setSize(512,512);
+  document.body.appendChild(renderer.domElement);
+
+  var mouse = {x:0.5,y:0.5,vx:0,vy:0,val:0};
+  document.body.addEventListener('touchstart', function(e){e.preventDefault();return false});
+  document.body.addEventListener('touchmove', function(e){
+    var touch = e.touches[0];
+    mouse.down=true;
+    document.onmousemove({
+      pageX: touch.pageX,
+      pageY: touch.pageY,
+    });
+    return false;
+  })
+  document.onmousedown=function(){mouse.down=true;}
+  document.onmouseup=function(){mouse.down=false;}
+  document.onmousemove=function(e){
+    if(mouse.timer)clearTimeout(mouse.timer);
+    var x = (e.pageX-renderer.domElement.offsetLeft)/512;
+    var y = 1-(e.pageY-renderer.domElement.offsetTop)/512;
+    var vx=x-mouse.x,vy=y-mouse.y;
+    var vr=Math.sqrt(vx*vx+vy*vy);
+    if(vr>0.1){vx*=0.1/vr;vy*=0.1/vr;}
+    mouse = {x: x, y: y, vx: vx, vy: vy, down: mouse.down};
+    mouse.val = mouse.down?1:0;
+    mouse.timer = setTimeout(function(){mouse.vx=mouse.vy=mouse.val=0;mouse.timer=null},40);
+  }
+  simulator = new WaveSimulator(512, renderer);
+  animate();
+  function animate(){
+    var r=0.01;
+    simulator.disturb({
+      center: new THREE.Vector2(mouse.x, mouse.y),
+      overwrite: 0,
+      radius: r,
+      scale: new THREE.Vector4(1,1,1,1),
+      value: new THREE.Vector4(-mouse.vx*100,-mouse.vy*100,0,0)
+    })
+    simulator.disturb({
+      center: new THREE.Vector2(mouse.x,mouse.y),
+      overwrite: 0,
+      radius: 0.002,
+      scale: new THREE.Vector4(1,1,1,0.999),
+      value: new THREE.Vector4(0,0,0,10*mouse.val)
+    })
+    var t=performance.now();
+    simulator.calc();
+    hoge=performance.now()-t;
+    simulator.disturb({
+      center: new THREE.Vector2(0.3,0.2),
+      overwrite: 1,
+      radius: 0.1,
+      scale: new THREE.Vector4(0,0,1,0),
+      value: new THREE.Vector4(0,0,0,1)
+    })
+    simulator.disturb({
+      center: new THREE.Vector2(0.6,0.3),
+      overwrite: 1,
+      radius: 0.1,
+      scale: new THREE.Vector4(0,0,1,0),
+      value: new THREE.Vector4(0,0,0,0)
+    })
+    simulator.show();
+    requestAnimationFrame(animate);
+  }
+}
+
+</script>
+
+
