@@ -81,8 +81,27 @@ WaveSimulator.showShader = function(width){
   /*FRAG
   uniform sampler2D texture;
   void main(){
-    vec4 uvha = texture2D(texture, gl_FragCoord.xy / WIDTH);
-    gl_FragColor.rgb=vec3((uvha.a-0.5)*10.0,1,1)*(0.5+(uvha.z-0.5)*2.0);
+    //vec4 uvha = texture2D(texture, gl_FragCoord.xy / WIDTH);
+    vec4 uvhx0 = texture2D(texture, gl_FragCoord.xy/WIDTH-vec2(1,0)/WIDTH);
+    vec4 uvhx1 = texture2D(texture, gl_FragCoord.xy/WIDTH+vec2(1,0)/WIDTH);
+    vec4 uvhy0 = texture2D(texture, gl_FragCoord.xy/WIDTH-vec2(0,1)/WIDTH);
+    vec4 uvhy1 = texture2D(texture, gl_FragCoord.xy/WIDTH+vec2(0,1)/WIDTH);
+    float dx=uvhx1.z-uvhx0.z+gl_FragCoord.x/WIDTH/30.0;
+    float dy=uvhy1.z-uvhy0.z+gl_FragCoord.y/WIDTH/30.0;
+    float hoge=sin(200.*dx)*sin(200.*dy);
+    float fuga=sin(130.*dx+120.*dy)*sin(120.*dx-130.*dy);
+    float piyo=sin(60.*dx+80.*dy)*sin(80.*dx-60.*dy);
+    float aaa=sin(410.*dx+780.*dy)*sin(780.*dx-410.*dy);
+    aaa=aaa*aaa;aaa=aaa*aaa;
+    float bbb=sin(530.*dx+770.*dy)*sin(770.*dx-530.*dy);
+    bbb=bbb*bbb;bbb=bbb*bbb;
+    float ccc=sin(750.*dx+490.*dy)*sin(490.*dx-750.*dy);
+    ccc=ccc*ccc;ccc=ccc*ccc;
+    float geso=aaa+bbb+ccc;geso=geso*geso;
+    vec3 rgb=vec3(hoge,fuga,piyo);
+    rgb=0.8*rgb*rgb*rgb*rgb*rgb*rgb+0.04*vec3(1,1,1)*geso;
+    gl_FragColor.rgb = (rgb+dot(rgb,vec3(1,1,1))*vec3(1,1,1))/2.0;
+    //gl_FragColor.rgb=vec3((uvha.a-0.5)*10.0,1,1)*(0.5+(uvha.z-0.5)*2.0);
     gl_FragColor.a = 1.0;
   }
   */
