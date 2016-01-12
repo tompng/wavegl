@@ -24,6 +24,25 @@ onload=function(){
     });
     return false;
   })
+
+  div=document.createElement('div');
+  div.style.cssText="position:absolute;width:8px;height:8px;background:blue;left:5;top:5;border-radius:50%";
+  div.x=0.5;div.y=0.5;
+  div.update=function(){
+    this.style.transform='translate('+512*this.x+'px,'+512*this.y+'px)';
+  };
+  div.update();
+  div.calc=function(){
+    var arr=simulator.read(this.x*512|0,512-this.y*512|0,1,1);
+    window.arr=arr;
+    this.x-=(arr[0]-0.5)*0.001*2;
+    this.y+=(arr[1]-0.5)*0.001*2;
+    this.x=(this.x+1)%1;
+    this.y=(this.y+1)%1;
+    this.update();
+  }
+  document.body.appendChild(div);
+
   document.onmousedown=function(){mouse.down=true;}
   document.onmouseup=function(){mouse.down=false;}
   document.onmousemove=function(e){
@@ -41,6 +60,7 @@ onload=function(){
   animate();
   function animate(){
     var r=0.01;
+    div.calc();
     simulator.disturb({
       center: new THREE.Vector2(mouse.x, mouse.y),
       overwrite: 0,
