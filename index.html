@@ -25,23 +25,33 @@ onload=function(){
     return false;
   })
 
-  div=document.createElement('div');
-  div.style.cssText="position:absolute;width:16px;height:16px;background:white;left:0;top:0;border-radius:50%";
-  div.x=0.5;div.y=0.5;
-  div.update=function(){
-    this.style.transform='translate('+512*this.x+'px,'+512*this.y+'px)';
-  };
-  div.update();
-  div.calc=function(){
-    var arr=simulator.read(this.x*512|0,512-this.y*512|0,1,1);
-    this.x-=(arr[0]-0.5)*0.001*2;
-    this.y+=(arr[1]-0.5)*0.001*2;
-    this.x=(this.x+1)%1;
-    this.y=(this.y+1)%1;
-    this.update();
+  function genDiv(x,y){
+    var id=Math.random();
+    var div=document.createElement('div');
+    div.style.cssText="position:absolute;width:16px;height:16px;background:white;left:0;top:0;border-radius:50%";
+    div.x=x||0.5;div.y=y||0.5;
+    div.update=function(){
+      this.style.transform='translate('+512*this.x+'px,'+512*this.y+'px)';
+    };
+    div.update();
+    div.calc=function(){
+      var arr=simulator.readStoredPixel('div'+id);
+      simulator.storePixel('div'+id,this.x*512,512-this.y*512);
+      if(arr){
+        this.x-=(arr[0]-0.5)*0.001*2;
+        this.y+=(arr[1]-0.5)*0.001*2;
+      }
+      this.x=(this.x+1)%1;
+      this.y=(this.y+1)%1;
+      this.update();
+    }
+    document.body.appendChild(div);
+    return div;
   }
-  document.body.appendChild(div);
-
+  var divs=[];
+  for(var i=0;i<32;i++){
+    divs.push(genDiv(Math.random(),Math.random()));
+  }
   document.onmousedown=function(){mouse.down=true;}
   document.onmouseup=function(){mouse.down=false;}
   document.onmousemove=function(e){
@@ -59,9 +69,11 @@ onload=function(){
   window.dtav=0;
   animate();
   function animate(){
+    simulator.storeLoad();
     var r=0.01;
     var t0=performance.now();
-    div.calc();
+    divs.forEach(function(d){d.calc()});
+    simulator.storeDone();
     simulator.disturb({
       center: new THREE.Vector2(mouse.x, mouse.y),
       overwrite: 0,

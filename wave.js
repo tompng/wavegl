@@ -1,4 +1,4 @@
-function WaveSimulator(width, renderer) {
+function WaveSimulator(size, renderer) {
   var camera = new THREE.Camera();
   var scene = new THREE.Scene();
   camera.position.z = 1;
@@ -8,10 +8,29 @@ function WaveSimulator(width, renderer) {
   }
   var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2));
   scene.add(mesh);
-  var wave0 = createRenderTarget(THREE.RGBAFormat);
-  var wave1 = createRenderTarget(THREE.RGBAFormat);
-  function createRenderTarget(type){
-    return new THREE.WebGLRenderTarget(width, width, {
+  var wave0 = createRenderTarget(THREE.RGBAFormat,size,size);
+  var wave1 = createRenderTarget(THREE.RGBAFormat,size,size);
+  var maxStore = 128;
+  var store = {
+    target: createRenderTarget(THREE.RGBAFormat, 2, 2*maxStore),
+    array: new Float32Array(2*2*maxStore*4),
+    position: {},
+    index: 0,
+    max: maxStore
+  }
+  store.scene = new THREE.Scene();
+  store.meshes = [];
+  store.shader = WaveSimulator.storeShader();
+  store.shader.uniforms.size.value = size;
+  store.shader.uniforms.height.value = store.max;
+  for(var i=0;i<maxStore;i++){
+    var smesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2));
+    smesh.material = store.shader;
+    store.meshes.push(smesh);
+    store.scene.add(smesh);
+  }
+  function createRenderTarget(type,w,h){
+    return new THREE.WebGLRenderTarget(w, h, {
       wrapS: THREE.RepeatWrapping,
       wrapT: THREE.RepeatWrapping,
       minFilter: THREE.NearestFilter,
@@ -22,9 +41,9 @@ function WaveSimulator(width, renderer) {
       depthBuffer: false
     });
   }
-  var disturbShader = WaveSimulator.disturbShader(width);
-  var showShader = WaveSimulator.showShader(width);
-  var waveShader = WaveSimulator.waveShader(width);
+  var disturbShader = WaveSimulator.disturbShader(size);
+  var showShader = WaveSimulator.showShader(size);
+  var waveShader = WaveSimulator.waveShader(size);
   this.disturb = function(option){
     mesh.material = disturbShader;
     for(name in option){
@@ -43,6 +62,39 @@ function WaveSimulator(width, renderer) {
     showShader.uniforms.time.value = performance.now()/1000;
     renderer.render(scene, camera);
   }
+  this.storeLoad = function(){
+    if(store.index){
+      gl.bindFramebuffer(gl.FRAMEBUFFER, store.target.__webglFramebuffer, true);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,store.target.__webglFramebuffer,true);
+      gl.readPixels(0, 0, 2, 2*store.index, gl.RGBA, gl.FLOAT, store.array);
+    }
+    store.meshes.forEach(function(m){m.visible=false;})
+    store.captured = {};
+    for(var id in store.positions){
+      var index = store.positions[id];
+      store.captured[id] = store.array.slice(16*index,16*(index+1));
+    }
+    window.store=store;
+    store.index = 0;
+    store.positions = {};
+  }
+  this.readStoredPixel = function(id){
+    return store.captured[id];
+  }
+  this.storePixel = function(id,x,y){
+    if(store.index==store.max)return;
+    store.positions[id]=store.index;
+    var mesh = store.meshes[store.index];
+    mesh.position.x = x/size;
+    mesh.position.y = y/size;
+    mesh.position.z = store.index/store.max;
+    mesh.visible = true;
+    store.index++;
+  }
+  this.storeDone = function(){
+    store.shader.uniforms.texture.value = this.wave;
+    renderer.render(store.scene, camera, store.target);
+  }
   this.calc = function(){
     this.wave = wave0;
     wave0 = wave1;
@@ -51,9 +103,9 @@ function WaveSimulator(width, renderer) {
     waveShader.uniforms.wave.value = wave0;
     renderer.render(scene, camera, wave1);
   }
-  this.read = function(x,y,w,h){
-    gl.bindFramebuffer(gl.FRAMEBUFFER,simulator.wave.__webglFramebuffer,true);
-    var arr=new Float32Array(w*h*4)
+  this.read = function(x,y,w,h,arr){
+    if(!arr)arr=new Float32Array(w*w*4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,this.wave.__webglFramebuffer,true);
     gl.readPixels(x,y,w,h,gl.RGBA,gl.FLOAT,arr);
     return arr;
   }
@@ -65,10 +117,44 @@ WaveSimulator.shaderCode = function(func, name){
   if(start<0||end<0)throw 'no shader '+name+' found';
   return code.substring(start+name.length+2,end);
 }
-WaveSimulator.showShader = function(width){
+WaveSimulator.storeShader = function(){
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      texture: {type: "t"},
+      size: {type: 'f'},
+      height: {type: 'f'},
+    },
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
+    transparent: true,
+    blending: THREE.NoBlending,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.ZeroFactor
+  });
+  /*VERT
+  uniform float size, height;
+  varying vec2 vsrc;
+  void main(){
+    vec4 xyiw = modelMatrix*vec4(0,0,0,1);
+    vsrc=xyiw.xy+position.xy/size;
+    gl_Position=vec4(
+      position.x,
+      2.0*xyiw.z-1.0+(position.y+1.0)/height,
+      0,
+      1
+    );
+  }
+  */
+  /*FRAG
+  uniform sampler2D texture;
+  varying vec2 vsrc;
+  void main(){gl_FragColor=texture2D(texture,vsrc);}
+  */
+}
+WaveSimulator.showShader = function(size){
   return new THREE.ShaderMaterial({
     uniforms: {texture: {type: "t"},time: {type: 'f'}},
-    defines: {WIDTH: width.toFixed(2)},
+    defines: {SIZE: size.toFixed(2)},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
@@ -83,13 +169,13 @@ WaveSimulator.showShader = function(width){
   uniform sampler2D texture;
   uniform float time;
   void main(){
-    //vec4 uvha = texture2D(texture, gl_FragCoord.xy / WIDTH);
-    vec4 uvhx0 = texture2D(texture, gl_FragCoord.xy/WIDTH-vec2(1,0)/WIDTH);
-    vec4 uvhx1 = texture2D(texture, gl_FragCoord.xy/WIDTH+vec2(1,0)/WIDTH);
-    vec4 uvhy0 = texture2D(texture, gl_FragCoord.xy/WIDTH-vec2(0,1)/WIDTH);
-    vec4 uvhy1 = texture2D(texture, gl_FragCoord.xy/WIDTH+vec2(0,1)/WIDTH);
-    float dx=uvhx1.z-uvhx0.z+gl_FragCoord.x/WIDTH/30.0;
-    float dy=uvhy1.z-uvhy0.z+gl_FragCoord.y/WIDTH/30.0;
+    vec4 uvha = texture2D(texture, gl_FragCoord.xy / SIZE);
+    vec4 uvhx0 = texture2D(texture, gl_FragCoord.xy/SIZE-vec2(1,0)/SIZE);
+    vec4 uvhx1 = texture2D(texture, gl_FragCoord.xy/SIZE+vec2(1,0)/SIZE);
+    vec4 uvhy0 = texture2D(texture, gl_FragCoord.xy/SIZE-vec2(0,1)/SIZE);
+    vec4 uvhy1 = texture2D(texture, gl_FragCoord.xy/SIZE+vec2(0,1)/SIZE);
+    float dx=uvhx1.z-uvhx0.z+gl_FragCoord.x/SIZE/30.0;
+    float dy=uvhy1.z-uvhy0.z+gl_FragCoord.y/SIZE/30.0;
     float dxt=dx-time*0.002,dyt=dy-time*0.001;
     float hoge=sin(200.*dxt)*sin(200.*dyt);
     float fuga=sin(130.*dxt+120.*dyt)*sin(120.*dxt-130.*dyt);
@@ -105,12 +191,14 @@ WaveSimulator.showShader = function(width){
     rgb=0.8*rgb*rgb*rgb*rgb*rgb*rgb+0.08*vec3(1,1,1)*geso;
     gl_FragColor.rgb = vec3(0,0,0.1)+(rgb+dot(rgb,vec3(1,1,1))*vec3(1,1,1))/2.0;
     //gl_FragColor.rgb=vec3((uvha.a-0.5)*10.0,1,1)*(0.5+(uvha.z-0.5)*2.0);
+    float foo=uvha.a-0.5;
+    gl_FragColor.rgb = gl_FragColor.rgb*(1.0-foo)+foo*foo*vec3(1,1,1);
     gl_FragColor.a = 1.0;
   }
   */
 }
 
-WaveSimulator.disturbShader = function(width){
+WaveSimulator.disturbShader = function(size){
   return new THREE.ShaderMaterial({
     uniforms: {
       radius: {type: 'f'},
@@ -120,7 +208,7 @@ WaveSimulator.disturbShader = function(width){
       texture: {type: "t"},
       overwrite: {type: 'f'}
     },
-    defines: {WIDTH: width.toFixed(2)},
+    defines: {SIZE: size.toFixed(2)},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
@@ -138,7 +226,7 @@ WaveSimulator.disturbShader = function(width){
   uniform sampler2D texture;
   uniform float overwrite;
   void main(){
-    vec2 uv = gl_FragCoord.xy/WIDTH;
+    vec2 uv = gl_FragCoord.xy/SIZE;
     vec2 p = uv - center;
     float factor = 1.0/(1.0+(p.x*p.x+p.y*p.y)/(radius*radius));
     vec4 zero = vec4(0.5, 0.5, 0.5, 0.5);
@@ -153,12 +241,12 @@ WaveSimulator.disturbShader = function(width){
   */
 }
 
-WaveSimulator.waveShader = function(width){
+WaveSimulator.waveShader = function(size){
   return new THREE.ShaderMaterial({
     uniforms: {
       wave: {type: "t"}
     },
-    defines: {WIDTH: width.toFixed(2)},
+    defines: {SIZE: size.toFixed(2)},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
@@ -171,20 +259,20 @@ WaveSimulator.waveShader = function(width){
   */
   /*FRAG
   uniform sampler2D wave;
-  const vec2 dx = vec2(1.0/WIDTH, 0);
-  const vec2 dy = vec2(0, 1.0/WIDTH);
+  const vec2 dx = vec2(1.0/SIZE, 0);
+  const vec2 dy = vec2(0, 1.0/SIZE);
   vec4 fetch(vec2 uv){
-    vec2 p = WIDTH*uv;
+    vec2 p = SIZE*uv;
     vec2 ip = floor(p);
     vec2 d=p-ip;
-    return texture2D(wave, ip/WIDTH)*(1.0-d.x)*(1.0-d.y)+
-    texture2D(wave, ip/WIDTH+dx)*d.x*(1.0-d.y)+
-    texture2D(wave, ip/WIDTH+dy)*(1.0-d.x)*d.y+
-    texture2D(wave, ip/WIDTH+dx+dy)*d.x*d.y;
+    return texture2D(wave, ip/SIZE)*(1.0-d.x)*(1.0-d.y)+
+    texture2D(wave, ip/SIZE+dx)*d.x*(1.0-d.y)+
+    texture2D(wave, ip/SIZE+dy)*(1.0-d.x)*d.y+
+    texture2D(wave, ip/SIZE+dx+dy)*d.x*d.y;
   }
   void main(){
-    vec2 coord = gl_FragCoord.xy/WIDTH;
-    coord = coord + (texture2D(wave,coord).xy-vec2(0.5,0.5))/WIDTH-(dx+dy)/2.0;
+    vec2 coord = gl_FragCoord.xy/SIZE;
+    coord = coord + (texture2D(wave,coord).xy-vec2(0.5,0.5))/SIZE-(dx+dy)/2.0;
     vec4 uvh = fetch(coord);
     vec4 uvhx0 = fetch(coord-dx);
     vec4 uvhx1 = fetch(coord+dx);
