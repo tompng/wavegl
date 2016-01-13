@@ -1,0 +1,64 @@
+<script src="three.min.js"></script>
+<script>
+onload=function(){
+  var width=800,height=600
+  camera = new THREE.Camera();
+  camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+  camera.position.z = 4;
+  camera.lookAt({x:0,y:0,z:0});
+  camera.initialRotation=camera.rotation.clone()
+  scene = new THREE.Scene();
+  chara = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+  scene.add(chara);
+  for(var i=0;i<100;i++){
+    box = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 4+8*Math.random()));
+    box.rotateZ(2*Math.PI*Math.random());
+    box.position.x=30*(2*Math.random()-1);
+    box.position.y=30*(2*Math.random()-1);
+    box.position.z=0;
+    scene.add(box);
+  }
+  water = new THREE.Mesh(new THREE.PlaneBufferGeometry(200,200));
+  scene.add(water);
+  renderer = new THREE.WebGLRenderer();
+  renderer.setClearColor(new THREE.Color(0x000000));
+  renderer.setSize(800,600);
+  document.body.appendChild(renderer.domElement);
+  animate();
+}
+var Key={LEFT:37,UP:38,RIGHT:39,DOWN:40,map:{}};
+document.onkeydown=function(e){
+  Key.map[e.keyCode]=true;
+}
+document.onkeyup=function(e){
+  Key.map[e.keyCode]=false;
+}
+var pos={x:0,y:0,th:0,rot:0,vx:0,vy:0}
+var camth=0;
+function animate(){
+  var v=(Key.map[Key.UP]?1:0)-(Key.map[Key.DOWN]?1:0);
+  pos.vx+=Math.cos(pos.th)*0.02*v;
+  pos.vy+=Math.sin(pos.th)*0.02*v;
+  pos.vx*=0.9;pos.vy*=0.9;
+  pos.x+=pos.vx;pos.y+=pos.vy;
+  chara.position.x=pos.x;
+  chara.position.y=pos.y;
+  chara.setRotationFromAxisAngle({x:0,y:0,z:1},pos.th)
+  if(Key.map[Key.LEFT])pos.rot+=0.01;
+  if(Key.map[Key.RIGHT])pos.rot-=0.01;
+  pos.rot*=0.8;
+  pos.th+=pos.rot;
+  camth=camth*0.8+pos.th*0.2;
+  camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
+  camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
+  camera.position.z=10;
+  camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
+  camera.rotateZ(camth-Math.PI/2)
+  camera.rotateX(0.2);
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+</script>
+
+
