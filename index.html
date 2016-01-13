@@ -69,9 +69,9 @@ onload=function(){
   window.dtav=0;
   animate();
   function animate(){
+    var t0=performance.now();
     simulator.storeLoad();
     var r=0.01;
-    var t0=performance.now();
     divs.forEach(function(d){d.calc()});
     simulator.storeDone();
     simulator.disturb({
@@ -104,7 +104,7 @@ onload=function(){
       value: new THREE.Vector4(0,0,0,0)
     })
     simulator.show();
-    dtav=0.95*dtav+0.05*(performance.now()-t0)
+    dtav=0.95*dtav+0.05*(performance.now()-t0);
     requestAnimationFrame(animate);
   }
 }

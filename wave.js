@@ -8,12 +8,12 @@ function WaveSimulator(size, renderer) {
   }
   var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2));
   scene.add(mesh);
-  var wave0 = createRenderTarget(THREE.RGBAFormat,size,size);
-  var wave1 = createRenderTarget(THREE.RGBAFormat,size,size);
+  var wave0 = createRenderTarget(size,size);
+  var wave1 = createRenderTarget(size,size);
   var maxStore = 128;
   var store = {
-    target: createRenderTarget(THREE.RGBAFormat, 2, 2*maxStore),
-    array: new Float32Array(2*2*maxStore*4),
+    target: createRenderTarget(2,2*maxStore,{type:THREE.UnsignedByteType}),
+    array: new Uint8Array(2*2*maxStore*4),
     position: {},
     index: 0,
     max: maxStore
@@ -29,14 +29,15 @@ function WaveSimulator(size, renderer) {
     store.meshes.push(smesh);
     store.scene.add(smesh);
   }
-  function createRenderTarget(type,w,h){
+  function createRenderTarget(w,h,option){
+    option=option||{};
     return new THREE.WebGLRenderTarget(w, h, {
       wrapS: THREE.RepeatWrapping,
       wrapT: THREE.RepeatWrapping,
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
-      format: type,
-      type: THREE.FloatType,
+      format: option.format||THREE.RGBAFormat,
+      type: option.type||THREE.FloatType,
       stencilBuffer: false,
       depthBuffer: false
     });
@@ -66,13 +67,15 @@ function WaveSimulator(size, renderer) {
     if(store.index){
       gl.bindFramebuffer(gl.FRAMEBUFFER, store.target.__webglFramebuffer, true);
       gl.bindFramebuffer(gl.FRAMEBUFFER,store.target.__webglFramebuffer,true);
-      gl.readPixels(0, 0, 2, 2*store.index, gl.RGBA, gl.FLOAT, store.array);
+      gl.readPixels(0, 0, 2, 2*store.index, gl.RGBA, gl.UNSIGNED_BYTE, store.array);
     }
     store.meshes.forEach(function(m){m.visible=false;})
     store.captured = {};
     for(var id in store.positions){
       var index = store.positions[id];
-      store.captured[id] = store.array.slice(16*index,16*(index+1));
+      var arr=[]
+      for(var i=0;i<16;i++)arr[i]=store.array[16*index+i]/0xff;
+      store.captured[id] = arr;
     }
     window.store=store;
     store.index = 0;
@@ -102,12 +105,6 @@ function WaveSimulator(size, renderer) {
     mesh.material = waveShader;
     waveShader.uniforms.wave.value = wave0;
     renderer.render(scene, camera, wave1);
-  }
-  this.read = function(x,y,w,h,arr){
-    if(!arr)arr=new Float32Array(w*w*4);
-    gl.bindFramebuffer(gl.FRAMEBUFFER,this.wave.__webglFramebuffer,true);
-    gl.readPixels(x,y,w,h,gl.RGBA,gl.FLOAT,arr);
-    return arr;
   }
 }
 WaveSimulator.shaderCode = function(func, name){
