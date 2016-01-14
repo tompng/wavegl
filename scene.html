@@ -12,20 +12,18 @@ onload=function(){
   chara = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
   scene.add(chara);
   var size=20;
-  genWaterWay(size).triangles.forEach(function(tri){
+  genWaterWay(-size/2,-size/2,size,size).triangles.forEach(function(tri){
     tri.map(function(p){return {x:p.x,y:p.y,z:1+0.5*Math.sin(1234*p.x+5432*p.y)}})
     var mesh=genPrismMesh(tri,1);
     var scale=20;
-    mesh.position.x=-size*scale/2;
-    mesh.position.y=-size*scale/2;
     mesh.scale.x=mesh.scale.y=scale;
     mesh.scale.z=1;
     scene.add(mesh)
   })
 
 
-  water = new THREE.Mesh(new THREE.PlaneBufferGeometry(200,200));
-  scene.add(water);
+  // water = new THREE.Mesh(new THREE.PlaneBufferGeometry(200,200));
+  // scene.add(water);
   renderer = new THREE.WebGLRenderer();
   renderer.setClearColor(new THREE.Color(0x000000));
   renderer.setSize(800,600);

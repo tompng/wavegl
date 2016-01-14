@@ -1,11 +1,14 @@
-function genWaterWay(size){
+function genWaterWay(rectX,rectY,rectW,rectH){
+  if(!rectW){rectW=rectH=rectX;rectX=rectY=0;}
   var arr=[];
-  for(var i=0;i<size;i++)arr[i]=[];
-  for(var i=0;i<size;i++){
-    for(var j=0;j<size;j++){
+  var offset=2;
+  for(var i=0;i<rectW+2*offset;i++){
+    arr[i]=[];
+    for(var j=0;j<rectH+2*offset;j++){
+      var ix=rectX+i-offset,iy=rectY+j-offset;
       arr[i][j]={
-        x:i+0.2+0.6*Math.random(),
-        y:j+0.2+0.6*Math.random(),
+        x:ix+0.2+0.6*randfunc(ix+0.5,iy),
+        y:iy+0.2+0.6*randfunc(ix,iy+0.5),
         tris: [],
         points: []
       }
@@ -21,14 +24,14 @@ function genWaterWay(size){
   var allPoints=[];
   function randfunc(x,y){
     var rnd=Math.sin(1234567*x)+Math.sin(987654*y);
-    return (54321+12345*rnd)%1<0.5;
+    return (54321+12345*rnd)%1;
   }
   function lineRandom(line){
-    return randfunc(line[0].x+line[1].x,line[0].y+line[1].y);
+    return randfunc(line[0].x+line[1].x,line[0].y+line[1].y)<0.5;
   }
 
-  for(var i=0;i<size-1;i++){
-    for(var j=0;j<size-1;j++){
+  for(var i=0;i<rectW+2*offset-1;i++){
+    for(var j=0;j<rectH+2*offset-1;j++){
       var p00=arr[i+0][j+0];
       var p10=arr[i+1][j+0];
       var p01=arr[i+0][j+1];
@@ -63,7 +66,7 @@ function genWaterWay(size){
     }
   }
 
-  for(var i=1;i<size-1;i++)for(var j=1;j<size-1;j++)allPoints.push(arr[i][j]);
+  for(var i=1;i<rectW+2*offset-1;i++)for(var j=1;j<rectH+2*offset-1;j++)allPoints.push(arr[i][j]);
   allPoints.forEach(function(p){
     p.points.sort(function(a,b){
       return Math.atan2(a.x-p.x,a.y-p.y)-Math.atan2(b.x-p.x,b.y-p.y);
@@ -104,7 +107,7 @@ function genWaterWay(size){
       var rb=Math.sqrt(db.x*db.x+db.y*db.y);
       var cos=(da.x*db.x+da.y*db.y)/ra/rb;
       var sin=Math.sqrt(1-cos*cos);
-      var len=0.05+0.1*Math.random()
+      var len=0.05+0.1*randfunc(a.x,b.y);
       var d={
         x:len*(da.x/ra+db.x/rb)/sin,
         y:len*(da.y/ra+db.y/rb)/sin
@@ -121,15 +124,19 @@ function genWaterWay(size){
       }
     })
   })
+  var triangles = [];
   allTriangles.forEach(function(t){
     for(var i=0;i<3;i++){
       var m=(t.moves&&t.moves[i])||{x:0,y:0};
       t[i]={x: t[i].x-m.x,y:t[i].y-m.y}
     }
+    var x=(t[0].x+t[1].x+t[2].x)/3;
+    var y=(t[0].y+t[1].y+t[2].y)/3;
+    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH)triangles.push(t);
   })
   return {
     points: allPoints,
-    triangles: allTriangles,
+    triangles: triangles,
     lines: allLines,
     random: randfunc
   }

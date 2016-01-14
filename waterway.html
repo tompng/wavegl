@@ -6,28 +6,32 @@ canvas.width=canvas.height=1024;
 var g=canvas.getContext('2d');
 document.body.innerHTML='';
 document.body.appendChild(canvas);
-var size=10;
+var size=20;
 g.translate(512,512);
 g.scale(1024/size,1024/size);
 g.translate(-size/2,-size/2);
 g.lineWidth=0.01;g.lineCap='round'
-var out=genWaterWay(size);
-
-out.lines.forEach(function(l){
-  g.globalAlpha=0.1;
-  g.beginPath();
-  g.moveTo(l[0].x,l[0].y);g.lineTo(l[1].x,l[1].y);
-  g.stroke();
-})
-out.triangles.forEach(function(tri){
-  g.globalAlpha = 0.2;
-  g.beginPath();
-  g.moveTo(tri[0].x,tri[0].y);
-  for(var i=1;i<tri.length;i++){
-    g.lineTo(tri[i].x,tri[i].y);
-  }
-  g.fill();
-  g.globalAlpha = 1;
-})
-
+for(var i=0;i<2;i++)for(var j=0;j<2;j++){
+  g.globalAlpha=0.4+0.2*Math.random();
+  var out=genWaterWay(size/2*i,size/2*j,size/2,size/2);
+  render(out)
+}
+function render(out){
+  out.lines.forEach(function(l){
+    g.globalAlpha=0.1;
+    g.beginPath();
+    g.moveTo(l[0].x,l[0].y);g.lineTo(l[1].x,l[1].y);
+    g.stroke();
+  })
+  out.triangles.forEach(function(tri){
+    g.globalAlpha = 0.2;
+    g.beginPath();
+    g.moveTo(tri[0].x,tri[0].y);
+    for(var i=1;i<tri.length;i++){
+      g.lineTo(tri[i].x,tri[i].y);
+    }
+    g.fill();
+    g.globalAlpha = 1;
+  })
+}
 </script>
