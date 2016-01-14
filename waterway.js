@@ -1,5 +1,4 @@
 function genWaterWay(size){
-  var size=100;
   var arr=[];
   for(var i=0;i<size;i++)arr[i]=[];
   for(var i=0;i<size;i++){
@@ -105,7 +104,7 @@ function genWaterWay(size){
       var rb=Math.sqrt(db.x*db.x+db.y*db.y);
       var cos=(da.x*db.x+da.y*db.y)/ra/rb;
       var sin=Math.sqrt(1-cos*cos);
-      var len=0.1
+      var len=0.05+0.1*Math.random()
       var d={
         x:len*(da.x/ra+db.x/rb)/sin,
         y:len*(da.y/ra+db.y/rb)/sin
@@ -122,9 +121,48 @@ function genWaterWay(size){
       }
     })
   })
+  allTriangles.forEach(function(t){
+    for(var i=0;i<3;i++){
+      var m=(t.moves&&t.moves[i])||{x:0,y:0};
+      t[i]={x: t[i].x-m.x,y:t[i].y-m.y}
+    }
+  })
   return {
     points: allPoints,
     triangles: allTriangles,
     lines: allLines,
+    random: randfunc
   }
 }
+
+function genPrismMesh(points,height){
+  var center={x:0,y:0,z:0};
+  points.forEach(function(p){
+    center.x+=p.x/points.length;
+    center.y+=p.y/points.length;
+    center.z+=(p.z||height)/points.length;
+  })
+  var vertices=[];
+  for(var i=0;i<points.length;i++){
+    var a=points[i],b=points[(i+1)%points.length];
+    vertices.push(
+      a.x,a.y,a.z||height,
+      b.x,b.y,b.z||height,
+      center.x,center.y,center.z
+    )
+    vertices.push(
+      a.x,a.y,0,
+      b.x,b.y,0,
+      b.x,b.y,b.z||height,
+      a.x,a.y,0,
+      b.x,b.y,b.z||height,
+      a.x,a.y,a.z||height
+    )
+  }
+  var varr = new Float32Array(vertices.length);
+  for(var i=0;i<vertices.length;i++)varr[i]=vertices[i];
+  geometry = new THREE.BufferGeometry();
+  geometry.addAttribute('position', new THREE.BufferAttribute(varr, 3));
+  return new THREE.Mesh(geometry);
+}
+

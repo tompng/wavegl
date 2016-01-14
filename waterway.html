@@ -22,11 +22,9 @@ out.lines.forEach(function(l){
 out.triangles.forEach(function(tri){
   g.globalAlpha = 0.2;
   g.beginPath();
-  var m=(tri.moves&&tri.moves[0])||{x:0,y:0};
-  g.moveTo(tri[0].x-m.x,tri[0].y-m.y);
+  g.moveTo(tri[0].x,tri[0].y);
   for(var i=1;i<tri.length;i++){
-    m=(tri.moves&&tri.moves[i])||{x:0,y:0};
-    g.lineTo(tri[i].x-m.x,tri[i].y-m.y);
+    g.lineTo(tri[i].x,tri[i].y);
   }
   g.fill();
   g.globalAlpha = 1;
