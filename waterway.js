@@ -74,9 +74,6 @@ function genWaterWay(rectX,rectY,rectW,rectH){
   });
   allPoints.forEach(function(p){
     if(p.points.length<=1)return;
-    for(var i=0;i<p.points.length;i++){
-
-    }
     p.points.sort(function(a,b){
       return Math.atan2(a.x-p.x,a.y-p.y)-Math.atan2(b.x-p.x,b.y-p.y);
     });
@@ -150,6 +147,7 @@ function genPrismMesh(points,height){
     center.z+=(p.z||height)/points.length;
   })
   var vertices=[];
+  var normals=[];
   for(var i=0;i<points.length;i++){
     var a=points[i],b=points[(i+1)%points.length];
     vertices.push(
@@ -157,6 +155,16 @@ function genPrismMesh(points,height){
       b.x,b.y,b.z||height,
       center.x,center.y,center.z
     )
+    var idx=vertices.length-9;
+    var va={x:a.x-center.x,y:a.y-center.y,z:(a.z||height)-(center.z||height)}
+    var vb={x:b.x-center.x,y:b.y-center.y,z:(b.z||height)-(center.z||height)}
+    var n={
+      x:va.y*vb.z-va.z*vb.y,
+      y:va.z*vb.x-va.x*vb.z,
+      z:va.x*vb.y-va.y*vb.x,
+    };
+    var nr=Math.sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
+    for(var j=0;j<3;j++)normals.push(n.x/nr,n.y/nr,n.z/nr);
     vertices.push(
       a.x,a.y,0,
       b.x,b.y,0,
@@ -165,11 +173,15 @@ function genPrismMesh(points,height){
       b.x,b.y,b.z||height,
       a.x,a.y,a.z||height
     )
+    var lx=b.x-a.x,ly=b.y-a.y,lr=Math.sqrt(lx*lx+ly*ly);
+    for(var j=0;j<6;j++)normals.push(ly/lr,-lx/lr,0);
   }
   var varr = new Float32Array(vertices.length);
+  var narr = new Float32Array(normals.length);
   for(var i=0;i<vertices.length;i++)varr[i]=vertices[i];
+  for(var i=0;i<normals.length;i++)narr[i]=normals[i];
   geometry = new THREE.BufferGeometry();
   geometry.addAttribute('position', new THREE.BufferAttribute(varr, 3));
+  geometry.addAttribute('normal', new THREE.BufferAttribute(narr, 3));
   return new THREE.Mesh(geometry);
 }
-
