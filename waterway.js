@@ -139,12 +139,12 @@ function genWaterWay(rectX,rectY,rectW,rectH){
   }
 }
 
-function genPrismMesh(points,height){
+function genPrismMesh(points,height,height2){
   var center={x:0,y:0,z:0};
   points.forEach(function(p){
     center.x+=p.x/points.length;
     center.y+=p.y/points.length;
-    center.z+=(p.z||height)/points.length;
+    center.z+=(height2||p.z||height)/points.length;
   })
   var vertices=[];
   var normals=[];

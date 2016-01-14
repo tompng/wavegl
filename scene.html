@@ -40,7 +40,8 @@ onload=function(){
         var p01={x:a.x+d.x*x-d.y*(y+h),y:a.y+d.y*x+d.x*(y+h)};
         var p11={x:a.x+d.x*(x+w)-d.y*(y+h),y:a.y+d.y*(x+w)+d.x*(y+h)};
         if(triInside(tri,p00)&&triInside(tri,p01)&&triInside(tri,p10)&&triInside(tri,p11)){
-          var building=genPrismMesh([p00,p10,p11,p01],4+8*Math.random());
+          var h=4+8*Math.random();
+          var building=genPrismMesh([p00,p10,p11,p01],h,h+2*Math.random());
           building.scale.x=building.scale.y=scale;
           scene.add(building);
           building.material=material;
