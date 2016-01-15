@@ -104,13 +104,13 @@ function genWaterWay(rectX,rectY,rectW,rectH){
       var rb=Math.sqrt(db.x*db.x+db.y*db.y);
       var cos=(da.x*db.x+da.y*db.y)/ra/rb;
       var sin=Math.sqrt(1-cos*cos);
-      var len=0.05+0.1*randfunc(a.x,b.y);
+      var len=0.1+0.1*randfunc(a.x,b.y);
       var d={
-        x:len*(da.x/ra+db.x/rb)/sin,
-        y:len*(da.y/ra+db.y/rb)/sin
+        x:-len*(da.x/ra+db.x/rb)/sin,
+        y:-len*(da.y/ra+db.y/rb)/sin
       }
       if(d.x*(a.y-p.y)-d.y*(a.x-p.x)>0){
-        d.x*=-1;d.y*=-1;
+        d.x=d.y=0;
       }
       for(var i=0;i<sec.length-1;i++){
         var a=sec[i],b=sec[i+1];
