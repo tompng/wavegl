@@ -127,7 +127,7 @@ function animate(){
   }
   var pvr=Math.sqrt(pvx*pvx+pvy*pvy);
   var hitTriangles = triangles.filter(function(tri){
-    return hitTest(tri,{x:pos.x,y:pos.y},pos.r+pvr);
+    return hitTest(tri,{x:pos.x,y:pos.y},pos.r+pvr+0.01);
   })
   var hit=false;
   var cos=Math.cos(pos.th),sin=Math.sin(pos.th);
@@ -137,11 +137,11 @@ function animate(){
       if(!hit)hit=triInside(tri,c)||hitTest(tri,c,p.r);
     })
   })
-  for(var i=0;i<4;i++){
+  for(var i=0;i<10;i++){
     var hits;
     var dt=1;
     var retry=false;
-    for(var i=0;i<10;i++){
+    for(var j=0;j<10;j++){
       var cos=Math.cos(pos.th+pos.rot*dt),sin=Math.sin(pos.th+pos.rot*dt);
       retry=false
       hits = [];
