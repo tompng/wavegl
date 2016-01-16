@@ -119,12 +119,14 @@ function animate(){
     triangles.push.apply(triangles,chunks[key].triangles);
   }
   triangles.forEach(function(tri){
-    hit=hit||hitTest(tri,{x:pos.x,y:pos.y},0.1).length;
+    hit=hit||hitTest(tri,{x:pos.x,y:pos.y},0.5);
   })
+  console.log(hit)
   for(var i=0;i<2;i++){
     var hit2=[];
     triangles.forEach(function(tri){
-      hit2.push.apply(hit2,hitTest(tri,{x:(pos.x+pos.vx),y:(pos.y+pos.vy)},0.5));
+      var hit=hitTest(tri,{x:(pos.x+pos.vx),y:(pos.y+pos.vy)},0.5);
+      if(hit)hit2.push(hit);
     })
     if(!hit&&!!hit2.length){
       var normal={x:0,y:0}
@@ -174,22 +176,23 @@ function triInside(tri, p){
   return (area2-area)/area<0.0001;
 }
 function hitTest(tri,p,r){
-  var normals=[];
+  var min,pos;
   for(var i=0;i<tri.length;i++){
     var a=tri[i],b=tri[(i+1)%3];
     var dx=b.x-a.x,dy=b.y-a.y;
-    var x=p.x-a.x,y=p.y-a.y;
-    if(x*x+y*y>r*r&&(p.x-b.x)*(p.x-b.x)+(p.y-b.y)*(p.y-b.y)>r*r){
-      var dd=dx*dx+dy*dy;
-      var dc=dx*x+dy*y;
-      var cc=x*x+y*y;
-      var t=dc/dd;
-      if(t<0||t>1||dd*t*t-2*dc*t+cc>r*r)continue;
+    var x=a.x-p.x,y=a.y-p.y;
+    var dd=dx*dx+dy*dy;
+    var dc=dx*x+dy*y;
+    var cc=x*x+y*y;
+    var t=-dc/dd;
+    if(t<0)t=0;if(t>1)t=1;
+    var r2=dd*t*t+2*dc*t+cc;
+    if((!pos||r2<min)&&r2<r*r){
+      pos={x: x+t*dx, y: y+t*dy};
+      min=r2;
     }
-    var dr=Math.sqrt(dx*dx+dy*dy);
-    normals.push({x:-dy/dr,y:dx/dr});
   }
-  return normals;
+  return pos;
 }
 </script>
 <style>
