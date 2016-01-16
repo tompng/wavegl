@@ -142,7 +142,7 @@ function genWaterWay(rectX,rectY,rectW,rectH){
   }
 }
 
-function WaterwayChunk(i,j,n,scale){
+function WaterwayChunk(i,j,n,scale,scene){
   this.i=i;
   this.j=j;
   this.n=n;
@@ -224,7 +224,59 @@ function WaterwayChunk(i,j,n,scale){
   geometry.addAttribute('normal', new THREE.BufferAttribute(narr, 3));
   this.mesh = new THREE.Mesh(geometry);
   this.triangles = triangles;
-  this.dispose = function(){
+  this.lines = ways.lines.map(function(l){
+    return l.map(function(p){return {x: p.x*scale, y: p.y*scale}});
+  });
+  scene.add(this.mesh);
+
+  this.items = [];
+  for(var i=0;i<10;i++){
+    var l=this.lines[Math.floor(this.lines.length*Math.random())];
+    var item = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+    var t=Math.random();
+    item.position.x=l[0].x*t+(1-t)*l[1].x;
+    item.position.y=l[0].y*t+(1-t)*l[1].y;
+    item.rotateX(Math.random());
+    item.rotateY(Math.random());
+    item.rotateZ(Math.random());
+    scene.add(item);
+    this.items.push(item);
+  }
+
+  this.dispose = function(scene){
+    scene.remove(this.mesh);
+    this.items.forEach(function(item){
+      item.geometry.dispose();
+      scene.remove(item);
+    })
+    scene.remove(this.item);
     geometry.dispose();
   }
+  this.update = function(pos){
+    var count = 0;
+    this.items.forEach(function(item){
+      item.rotateX(0.01);
+      item.rotateY(0.01);
+      item.rotateZ(0.01);
+      var dx=pos.x-item.position.x;
+      var dy=pos.y-item.position.y;
+      var dr=Math.sqrt(dx*dx+dy*dy);
+      var dt=0.05;
+      if(!item.visible)return;
+      if(!item.count&&dr<4){
+        item.original={x:item.position.x,y:item.position.y};
+        item.count=dt;
+      }else if(item.count!==undefined){
+        var t=item.count*item.count;
+        item.scale.x=1-t;
+        item.scale.y=1-t;
+        item.scale.z=1-t;
+        item.position.x=item.original.x*(1-t)+t*pos.x;
+        item.position.y=item.original.y*(1-t)+t*pos.y;
+        item.count+=dt;
+        if(item.count>=1)item.visible=false;
+      }
+    })
+  }
 }
+

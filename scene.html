@@ -37,18 +37,18 @@ var damage=0;
 var chunkSize=4
 var numChunks=1;
 var chunks = {};
+var items = []
 function animate(){
   var chunkx=Math.round(pos.x/chunkSize/scale);
   var chunky=Math.round(pos.y/chunkSize/scale);
-  for(key in chunks)chunks[key].count++;
+  for(var key in chunks)chunks[key].count++;
   for(var i=chunkx-numChunks;i<=chunkx+numChunks;i++){
     for(var j=chunky-numChunks;j<=chunky+numChunks;j++){
       var chunk = chunks[[i,j]];
       if(!chunk){
         console.log('gen',i,j);
-        chunk=chunks[[i,j]]=new WaterwayChunk(i,j,chunkSize,scale);
+        chunk=chunks[[i,j]]=new WaterwayChunk(i,j,chunkSize,scale,scene);
         chunk.mesh.material=material;
-        scene.add(chunk.mesh);
       }
       chunk.count=0;
     }
@@ -58,8 +58,13 @@ function animate(){
   while(oldchunks.length>(2*numChunks+2)*(2*numChunks+2)){
     var chunk = oldchunks.pop();
     delete chunks[[chunk.i,chunk.j]];
-    chunk.dispose();
+    chunk.dispose(scene);
     scene.remove(chunk.mesh);
+  }
+
+
+  for(var key in chunks){
+    chunks[key].update(pos);
   }
 
 
@@ -116,7 +121,7 @@ function animate(){
   camth=camth*0.8+pos.th*0.2;
   camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
   camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
-  camera.position.z=20*8;
+  camera.position.z=20*(Key.map[32]?32:1);
   camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
   camera.rotateZ(camth-Math.PI/2)
   camera.rotateX(0.2);
