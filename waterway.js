@@ -80,7 +80,7 @@ function genWaterWay(rectX,rectY,rectW,rectH){
     var sections = [[]];
     p.points.forEach(function(q){
       sections[sections.length-1].push(q);
-      if(!lineRandom([p,q]))sections.push([q]);
+      if(lineRandom([p,q]))sections.push([q]);
     })
     var first=sections[0];
     var last=sections[sections.length-1];
@@ -109,9 +109,7 @@ function genWaterWay(rectX,rectY,rectW,rectH){
         x:-len*(da.x/ra+db.x/rb)/sin,
         y:-len*(da.y/ra+db.y/rb)/sin
       }
-      if(d.x*(a.y-p.y)-d.y*(a.x-p.x)>0){
-        d.x=d.y=0;
-      }
+      if(d.x*(a.y-p.y)-d.y*(a.x-p.x)>0)d.x=d.y=0;
       for(var i=0;i<sec.length-1;i++){
         var a=sec[i],b=sec[i+1];
         var t=triangleFor(a,b);
@@ -129,59 +127,104 @@ function genWaterWay(rectX,rectY,rectW,rectH){
     }
     var x=(t[0].x+t[1].x+t[2].x)/3;
     var y=(t[0].y+t[1].y+t[2].y)/3;
+    var area=(t[1].x-t[0].x)*(t[2].y-t[0].y)-(t[1].y-t[0].y)*(t[2].x-t[0].x);
+    if(area<0.05)return;
     if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH)triangles.push(t);
   })
+  var lines = [];
+  allLines.forEach(function(l){
+    if(lineRandom(l))lines.push(l);
+  })
   return {
-    points: allPoints,
     triangles: triangles,
-    lines: allLines,
+    lines: lines,
     random: randfunc
   }
 }
 
-function genPrismMesh(points,height,height2){
-  var center={x:0,y:0,z:0};
-  points.forEach(function(p){
-    center.x+=p.x/points.length;
-    center.y+=p.y/points.length;
-    center.z+=(height2||p.z||height)/points.length;
+function WaterwayChunk(i,j,n,scale){
+  this.i=i;
+  this.j=j;
+  this.n=n;
+  this.scale=scale;
+  var ways = genWaterWay(i*n,j*n,n,n);
+  var positions = [];
+  var normals = [];
+  var triangles = [];
+  ways.triangles.forEach(function(triangle){
+    triangles.push(triangle.map(function(p){
+      return {x:p.x*scale,y:p.y*scale}
+    }));
+  });
+  triangles.forEach(function(triangle){
+    addPrismMesh(triangle.map(function(p){
+      return {x:p.x,y:p.y,z:1+ways.random(p.x,p.y)};
+    }));
+    for(var i=0;i<3;i++){
+      var a=triangle[i],b=triangle[(i+1)%3];
+      var d={x:b.x-a.x,y:b.y-a.y};
+      var dr=Math.sqrt(d.x*d.x+d.y*d.y);
+      d.x/=dr;d.y/=dr;
+      for(var j=0;j<2;j++){
+        var w=scale*(0.1+0.3*Math.random());
+        var h=scale*(0.1+0.3*Math.random());
+        var x=(dr-w)*Math.random();
+        var y=scale*0.05*Math.random();
+        var p00={x:a.x+d.x*x-d.y*y,y:a.y+d.y*x+d.x*y};
+        var p10={x:a.x+d.x*(x+w)-d.y*y,y:a.y+d.y*(x+w)+d.x*y};
+        var p01={x:a.x+d.x*x-d.y*(y+h),y:a.y+d.y*x+d.x*(y+h)};
+        var p11={x:a.x+d.x*(x+w)-d.y*(y+h),y:a.y+d.y*(x+w)+d.x*(y+h)};
+        if(triInside(triangle,p00)&&triInside(triangle,p01)&&triInside(triangle,p10)&&triInside(triangle,p11)){
+          var h=4+8*Math.random();
+          addPrismMesh([p00,p10,p11,p01],h,h+2*Math.random());
+        }
+      }
+    }
   })
-  var vertices=[];
-  var normals=[];
-  for(var i=0;i<points.length;i++){
-    var a=points[i],b=points[(i+1)%points.length];
-    vertices.push(
-      a.x,a.y,a.z||height,
-      b.x,b.y,b.z||height,
-      center.x,center.y,center.z
-    )
-    var idx=vertices.length-9;
-    var va={x:a.x-center.x,y:a.y-center.y,z:(a.z||height)-(center.z||height)}
-    var vb={x:b.x-center.x,y:b.y-center.y,z:(b.z||height)-(center.z||height)}
-    var n={
-      x:va.y*vb.z-va.z*vb.y,
-      y:va.z*vb.x-va.x*vb.z,
-      z:va.x*vb.y-va.y*vb.x,
-    };
-    var nr=Math.sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
-    for(var j=0;j<3;j++)normals.push(n.x/nr,n.y/nr,n.z/nr);
-    vertices.push(
-      a.x,a.y,0,
-      b.x,b.y,0,
-      b.x,b.y,b.z||height,
-      a.x,a.y,0,
-      b.x,b.y,b.z||height,
-      a.x,a.y,a.z||height
-    )
-    var lx=b.x-a.x,ly=b.y-a.y,lr=Math.sqrt(lx*lx+ly*ly);
-    for(var j=0;j<6;j++)normals.push(ly/lr,-lx/lr,0);
+  function addPrismMesh(points,height,height2){
+    var center={x:0,y:0,z:0};
+    points.forEach(function(p){
+      center.x+=p.x/points.length;
+      center.y+=p.y/points.length;
+      center.z+=(height2||p.z||height)/points.length;
+    });
+    for(var i=0;i<points.length;i++){
+      var a=points[i],b=points[(i+1)%points.length];
+      positions.push(
+        a.x,a.y,a.z||height,
+        b.x,b.y,b.z||height,
+        center.x,center.y,center.z
+      );
+      var idx=positions.length-9;
+      var va={x:a.x-center.x,y:a.y-center.y,z:(a.z||height)-(center.z||height)}
+      var vb={x:b.x-center.x,y:b.y-center.y,z:(b.z||height)-(center.z||height)}
+      var n={
+        x:va.y*vb.z-va.z*vb.y,
+        y:va.z*vb.x-va.x*vb.z,
+        z:va.x*vb.y-va.y*vb.x,
+      };
+      var nr=Math.sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
+      for(var j=0;j<3;j++)normals.push(n.x/nr,n.y/nr,n.z/nr);
+      positions.push(
+        a.x,a.y,0,
+        b.x,b.y,0,
+        b.x,b.y,b.z||height,
+        a.x,a.y,0,
+        b.x,b.y,b.z||height,
+        a.x,a.y,a.z||height
+      );
+      var lx=b.x-a.x,ly=b.y-a.y,lr=Math.sqrt(lx*lx+ly*ly);
+      for(var j=0;j<6;j++)normals.push(ly/lr,-lx/lr,0);
+    }
   }
-  var varr = new Float32Array(vertices.length);
-  var narr = new Float32Array(normals.length);
-  for(var i=0;i<vertices.length;i++)varr[i]=vertices[i];
-  for(var i=0;i<normals.length;i++)narr[i]=normals[i];
+  var varr = new Float32Array(positions);
+  var narr = new Float32Array(normals);
   geometry = new THREE.BufferGeometry();
   geometry.addAttribute('position', new THREE.BufferAttribute(varr, 3));
   geometry.addAttribute('normal', new THREE.BufferAttribute(narr, 3));
-  return new THREE.Mesh(geometry);
+  this.mesh = new THREE.Mesh(geometry);
+  this.triangles = triangles;
+  this.dispose = function(){
+    geometry.dispose();
+  }
 }

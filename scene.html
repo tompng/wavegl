@@ -9,7 +9,7 @@ onload=function(){
   camera.lookAt({x:0,y:0,z:0});
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
-  var material = new THREE.MeshLambertMaterial({color: 0x887766})
+  material = new THREE.MeshLambertMaterial({color: 0x887766})
   var dlight = new THREE.DirectionalLight(0x999999);
   var alight = new THREE.AmbientLight(0x666666);
   dlight.position.set(1, 1, 1).normalize();
@@ -18,37 +18,6 @@ onload=function(){
   scene.add(chara);
   var size=10;
   scale=20;
-  triangles = genWaterWay(-size/2,-size/2,size,size).triangles
-  triangles.forEach(function(tri){
-    tri=tri.map(function(p){return {x:p.x,y:p.y,z:1+Math.sin(1234*p.x+5432*p.y)}})
-    var mesh=genPrismMesh(tri);
-    mesh.scale.x=mesh.scale.y=scale;
-    mesh.material=material;
-    scene.add(mesh);
-    for(var i=0;i<3;i++){
-      var a=tri[i],b=tri[(i+1)%3];
-      var d={x:b.x-a.x,y:b.y-a.y};
-      var dr=Math.sqrt(d.x*d.x+d.y*d.y);
-      d.x/=dr;d.y/=dr;
-      for(var j=0;j<2;j++){
-        var w=0.1+0.3*Math.random();
-        var h=0.1+0.3*Math.random();
-        var x=(dr-w)*Math.random();
-        var y=0.05*Math.random();
-        var p00={x:a.x+d.x*x-d.y*y,y:a.y+d.y*x+d.x*y};
-        var p10={x:a.x+d.x*(x+w)-d.y*y,y:a.y+d.y*(x+w)+d.x*y};
-        var p01={x:a.x+d.x*x-d.y*(y+h),y:a.y+d.y*x+d.x*(y+h)};
-        var p11={x:a.x+d.x*(x+w)-d.y*(y+h),y:a.y+d.y*(x+w)+d.x*(y+h)};
-        if(triInside(tri,p00)&&triInside(tri,p01)&&triInside(tri,p10)&&triInside(tri,p11)){
-          var h=4+8*Math.random();
-          var building=genPrismMesh([p00,p10,p11,p01],h,h+2*Math.random());
-          building.scale.x=building.scale.y=scale;
-          scene.add(building);
-          building.material=material;
-        }
-      }
-    }
-  })
   renderer = new THREE.WebGLRenderer();
   renderer.setClearColor(new THREE.Color(0xaaaaaa));
   renderer.setSize(800,600);
@@ -62,10 +31,38 @@ document.onkeydown=function(e){
 document.onkeyup=function(e){
   Key.map[e.keyCode]=false;
 }
-var pos={x:4,y:11,th:0,rot:0,vx:0,vy:0}
+var pos={x:0,y:0,th:0,rot:0,vx:0,vy:0}
 var camth=0;
 var damage=0;
+var chunkSize=4
+var numChunks=1;
+var chunks = {};
 function animate(){
+  var chunkx=Math.round(pos.x/chunkSize/scale);
+  var chunky=Math.round(pos.y/chunkSize/scale);
+  for(key in chunks)chunks[key].count++;
+  for(var i=chunkx-numChunks;i<=chunkx+numChunks;i++){
+    for(var j=chunky-numChunks;j<=chunky+numChunks;j++){
+      var chunk = chunks[[i,j]];
+      if(!chunk){
+        console.log('gen',i,j);
+        chunk=chunks[[i,j]]=new WaterwayChunk(i,j,chunkSize,scale);
+        chunk.mesh.material=material;
+        scene.add(chunk.mesh);
+      }
+      chunk.count=0;
+    }
+  }
+  var oldchunks=Object.keys(chunks).map(function(key){return chunks[key]});
+  oldchunks.sort(function(a,b){return a.count-b.count});
+  while(oldchunks.length>(2*numChunks+2)*(2*numChunks+2)){
+    var chunk = oldchunks.pop();
+    delete chunks[[chunk.i,chunk.j]];
+    chunk.dispose();
+    scene.remove(chunk.mesh);
+  }
+
+
   if(Key.map[Key.LEFT])pos.rot+=0.01;
   if(Key.map[Key.RIGHT])pos.rot-=0.01;
   if(damage<0.5){
@@ -79,13 +76,17 @@ function animate(){
   pos.vx=pvx;
   pos.vy=pvy;
   var hit=false;
+  var triangles=[];
+  for(var key in chunks){
+    triangles.push.apply(triangles,chunks[key].triangles);
+  }
   triangles.forEach(function(tri){
-    hit=hit||hitTest(tri,{x:pos.x/scale,y:pos.y/scale},0.5/scale).length;
+    hit=hit||hitTest(tri,{x:pos.x,y:pos.y},0.5).length;
   })
   for(var i=0;i<2;i++){
     var hit2=[];
     triangles.forEach(function(tri){
-      hit2.push.apply(hit2,hitTest(tri,{x:(pos.x+pos.vx)/scale,y:(pos.y+pos.vy)/scale},0.5/scale));
+      hit2.push.apply(hit2,hitTest(tri,{x:(pos.x+pos.vx),y:(pos.y+pos.vy)},0.5));
     })
     if(!hit&&!!hit2.length){
       var normal={x:0,y:0}
@@ -115,7 +116,7 @@ function animate(){
   camth=camth*0.8+pos.th*0.2;
   camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
   camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
-  camera.position.z=20;
+  camera.position.z=20*8;
   camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
   camera.rotateZ(camth-Math.PI/2)
   camera.rotateX(0.2);
@@ -152,6 +153,4 @@ function hitTest(tri,p,r){
   }
   return normals;
 }
-
-
 </script>
