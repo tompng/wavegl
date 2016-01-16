@@ -1,5 +1,6 @@
 <script src="three.min.js"></script>
 <script src="waterway.js"></script>
+<script src="wave.js"></script>
 <script>
 onload=function(){
   var width=800,height=600
@@ -19,6 +20,7 @@ onload=function(){
   var size=10;
   scale=20;
   renderer = new THREE.WebGLRenderer();
+  simulator = new WaveSimulator(512, renderer);
   renderer.setClearColor(new THREE.Color(0xaaaaaa));
   renderer.setSize(800,600);
   document.body.appendChild(renderer.domElement);
@@ -31,8 +33,14 @@ document.onkeydown=function(e){
 document.onkeyup=function(e){
   Key.map[e.keyCode]=false;
 }
-var pos={x:0,y:0,th:0,rot:0,vx:0,vy:0}
-var camth=0;
+var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
+  {x:0,y:-0.5,r:0.35},
+  {x:0,y:-0.25,r:0.45},
+  {x:0,y:0,r:0.5},
+  {x:0,y:+0.25,r:0.45},
+  {x:0,y:+0.5,r:0.35},
+]}
+var camth=pos.th;
 var score=0;
 var barvalue=100;
 var damage=0;
@@ -113,25 +121,49 @@ function animate(){
   var pvy=(cos*pos.vx+sin*pos.vy)*sin*0.99-0.96*(-cos*pos.vy+sin*pos.vx)*cos;
   pos.vx=pvx;
   pos.vy=pvy;
-  var hit=false;
   var triangles=[];
   for(var key in chunks){
     triangles.push.apply(triangles,chunks[key].triangles);
   }
-  triangles.forEach(function(tri){
-    hit=hit||hitTest(tri,{x:pos.x,y:pos.y},0.5);
+  var pvr=Math.sqrt(pvx*pvx+pvy*pvy);
+  var hitTriangles = triangles.filter(function(tri){
+    return hitTest(tri,{x:pos.x,y:pos.y},pos.r+pvr);
   })
-  console.log(hit)
-  for(var i=0;i<2;i++){
-    var hit2=[];
-    triangles.forEach(function(tri){
-      var hit=hitTest(tri,{x:(pos.x+pos.vx),y:(pos.y+pos.vy)},0.5);
-      if(hit)hit2.push(hit);
+  var hit=false;
+  var cos=Math.cos(pos.th),sin=Math.sin(pos.th);
+  hitTriangles.forEach(function(tri){
+    pos.shape.forEach(function(p){
+      var c={x:pos.x+p.y*cos-p.x*sin,y:pos.y+p.y*sin+p.x*cos};
+      if(!hit)hit=triInside(tri,c)||hitTest(tri,c,p.r);
     })
-    if(!hit&&!!hit2.length){
+  })
+  for(var i=0;i<4;i++){
+    var hits;
+    var dt=1;
+    var retry=false;
+    for(var i=0;i<10;i++){
+      var cos=Math.cos(pos.th+pos.rot*dt),sin=Math.sin(pos.th+pos.rot*dt);
+      retry=false
+      hits = [];
+      hitTriangles.forEach(function(tri){
+        pos.shape.forEach(function(p){
+          var c={x:pos.x+pos.vx*dt+p.y*cos-p.x*sin,y:pos.y+pos.vy*dt+p.y*sin+p.x*cos};
+          if(triInside(tri,c))retry=true;
+          var n=hitTest(tri,c,p.r);
+          if(n)hits.push({pos: c, normal: n});
+        });
+      });
+      if(!retry)break;
+      dt/=2;
+    }
+    if(retry){
+      console.error(retry,dt)
+      return;
+    }
+    if(!hit&&!!hits.length){
       var normal={x:0,y:0}
-      hit2.forEach(function(n){
-        normal.x+=n.x;normal.y+=n.y;
+      hits.forEach(function(h){
+        normal.x+=h.normal.x;normal.y+=h.normal.y;
       });
       var nr=Math.sqrt(normal.x*normal.x+normal.y*normal.y);
       normal.x/=nr;normal.y/=nr;
@@ -141,9 +173,10 @@ function animate(){
         pos.vy-=1.5*vn*normal.y
       }
       if(pos.vx*pos.vx+pos.vy*pos.vy<0.01*0.01)pos.vx=pos.vy=0;
-      if(damage==0)damage=1;
+      // if(damage==0)damage=1;
     }else{
-      pos.x+=pos.vx;pos.y+=pos.vy;
+      pos.x+=pos.vx*dt;pos.y+=pos.vy*dt;
+      pos.th+=pos.rot*dt;
       break;
     }
   }
@@ -152,7 +185,6 @@ function animate(){
   chara.position.y=pos.y;
   chara.setRotationFromAxisAngle({x:0,y:0,z:1},pos.th)
   pos.rot*=0.8;
-  pos.th+=pos.rot;
   camth=camth*0.8+pos.th*0.2;
   camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
   camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
