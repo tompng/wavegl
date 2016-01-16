@@ -39,7 +39,6 @@ var damage=0;
 var state='start'
 var chunkSize=4
 var numChunks=1;
-var nodamagecount=0;
 var chunks = {};
 var items = []
 function animate(){
@@ -83,7 +82,7 @@ function animate(){
   }
   if(state=='game'){
     $message.style.display='none';
-    barvalue-=0.075;
+    barvalue-=0.05;
     for(var key in chunks){
       var count = chunks[key].update(pos);
       for(var i=0;i<count;i++){
@@ -92,7 +91,7 @@ function animate(){
         }else{
           score+=Math.round(count*(10+0.9*barvalue))
         }
-        barvalue += 10;
+        barvalue += 5;
         if(barvalue>140)barvalue=140;
       }
     }
@@ -104,7 +103,7 @@ function animate(){
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
   if(Key.map[Key.RIGHT])pos.rot-=0.01;
-  if(damage<0.5){
+  if(damage==0){
     var v=(Key.map[Key.UP]?1:0)-(Key.map[Key.DOWN]?1:0);
     pos.vx+=Math.cos(pos.th)*0.004*v;
     pos.vy+=Math.sin(pos.th)*0.004*v;
@@ -140,18 +139,13 @@ function animate(){
         pos.vy-=1.5*vn*normal.y
       }
       if(pos.vx*pos.vx+pos.vy*pos.vy<0.01*0.01)pos.vx=pos.vy=0;
-      if(!nodamagecount&&state=='game'){
-        nodamagecount=20;
-        barvalue-=10;
-      }
-      damage=1;
+      if(damage==0)damage=1;
     }else{
       pos.x+=pos.vx;pos.y+=pos.vy;
       break;
     }
   }
-  if(nodamagecount)nodamagecount--;
-  damage*=0.9;
+  damage=Math.max(damage-0.02,0);
   chara.position.x=pos.x;
   chara.position.y=pos.y;
   chara.setRotationFromAxisAngle({x:0,y:0,z:1},pos.th)
