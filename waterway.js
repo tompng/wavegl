@@ -243,7 +243,7 @@ function WaterwayChunk(i,j,n,scale,scene){
     this.items.push(item);
   }
 
-  this.dispose = function(scene){
+  this.dispose = function(){
     scene.remove(this.mesh);
     this.items.forEach(function(item){
       item.geometry.dispose();
@@ -263,20 +263,22 @@ function WaterwayChunk(i,j,n,scale,scene){
       var dr=Math.sqrt(dx*dx+dy*dy);
       var dt=0.05;
       if(!item.visible)return;
-      if(!item.count&&dr<4){
+      if(!item.phase&&dr<4){
         item.original={x:item.position.x,y:item.position.y};
-        item.count=dt;
-      }else if(item.count!==undefined){
-        var t=item.count*item.count;
+        item.phase=dt;
+        count++;
+      }else if(item.phase!==undefined){
+        var t=item.phase*item.phase;
         item.scale.x=1-t;
         item.scale.y=1-t;
         item.scale.z=1-t;
         item.position.x=item.original.x*(1-t)+t*pos.x;
         item.position.y=item.original.y*(1-t)+t*pos.y;
-        item.count+=dt;
-        if(item.count>=1)item.visible=false;
+        item.phase+=dt;
+        if(item.phase>=1)item.visible=false;
       }
     })
+    return count;
   }
 }
 

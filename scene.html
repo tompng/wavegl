@@ -33,9 +33,13 @@ document.onkeyup=function(e){
 }
 var pos={x:0,y:0,th:0,rot:0,vx:0,vy:0}
 var camth=0;
+var score=0;
+var barvalue=100;
 var damage=0;
+var state='start'
 var chunkSize=4
 var numChunks=1;
+var nodamagecount=0;
 var chunks = {};
 var items = []
 function animate(){
@@ -58,15 +62,45 @@ function animate(){
   while(oldchunks.length>(2*numChunks+2)*(2*numChunks+2)){
     var chunk = oldchunks.pop();
     delete chunks[[chunk.i,chunk.j]];
-    chunk.dispose(scene);
+    chunk.dispose();
     scene.remove(chunk.mesh);
   }
 
 
-  for(var key in chunks){
-    chunks[key].update(pos);
+  var $message=document.querySelector('#message')
+  if(state=='start'){
+    $message.style.display='block';
+    if(Key.map[32])state='game';
+    $message.innerHTML='press space<br>move: arrows';
   }
-
+  if(state=='gameover'){
+    $message.style.display='block';
+    $message.innerHTML='game over<br>press space';
+    if(Key.map[32]){
+      score=0;barvalue=100;
+      state='game';
+    }
+  }
+  if(state=='game'){
+    $message.style.display='none';
+    barvalue-=0.075;
+    for(var key in chunks){
+      var count = chunks[key].update(pos);
+      for(var i=0;i<count;i++){
+        if(barvalue>100){
+          score+=count*200;
+        }else{
+          score+=Math.round(count*(10+0.9*barvalue))
+        }
+        barvalue += 10;
+        if(barvalue>140)barvalue=140;
+      }
+    }
+    if(barvalue<0){barvalue=0;state='gameover';}
+    document.querySelector('#bar_inner').style.width=barvalue+'%';
+    document.querySelector('#bar').className = barvalue>100?'gold':'';
+    document.querySelector('#score').innerHTML = 'score: '+ score;
+  }
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
   if(Key.map[Key.RIGHT])pos.rot-=0.01;
@@ -86,7 +120,7 @@ function animate(){
     triangles.push.apply(triangles,chunks[key].triangles);
   }
   triangles.forEach(function(tri){
-    hit=hit||hitTest(tri,{x:pos.x,y:pos.y},0.5).length;
+    hit=hit||hitTest(tri,{x:pos.x,y:pos.y},0.1).length;
   })
   for(var i=0;i<2;i++){
     var hit2=[];
@@ -106,12 +140,17 @@ function animate(){
         pos.vy-=1.5*vn*normal.y
       }
       if(pos.vx*pos.vx+pos.vy*pos.vy<0.01*0.01)pos.vx=pos.vy=0;
+      if(!nodamagecount&&state=='game'){
+        nodamagecount=20;
+        barvalue-=10;
+      }
       damage=1;
     }else{
       pos.x+=pos.vx;pos.y+=pos.vy;
       break;
     }
   }
+  if(nodamagecount)nodamagecount--;
   damage*=0.9;
   chara.position.x=pos.x;
   chara.position.y=pos.y;
@@ -121,7 +160,7 @@ function animate(){
   camth=camth*0.8+pos.th*0.2;
   camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
   camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
-  camera.position.z=20*(Key.map[32]?32:1);
+  camera.position.z=20*(Key.map[27]?32:1);
   camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
   camera.rotateZ(camth-Math.PI/2)
   camera.rotateX(0.2);
@@ -159,3 +198,48 @@ function hitTest(tri,p,r){
   return normals;
 }
 </script>
+<style>
+div{z-index:1;position:absolute;}
+canvas{position:absolute;left:0px;top:0px;}
+#score{
+  left: 10px;
+  top: 20px;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 0 2px gray;
+  font-size: 18px;
+  font-family: sans-serif;
+}
+#bar{
+  left: 20px;
+  top: 5px;
+  width: 760px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+#bar_inner{
+  width:50%;
+  height:100%;
+  background: white;
+  opacity: 0.8;
+}
+#bar.gold{opacity: 1;box-shadow: 0 0 8px yellow;}
+#bar.gold #bar_inner{opacity: 1;width: 100%;}
+#message{
+  width: 300px;
+  height:200px;
+  left:200px;
+  top:150px;
+  padding: 50px;
+  border-radius: 20px;
+  background:white;
+  opacity: 0.8;
+  font-size: 20px;
+  font-family: sans-serif;
+}
+</style>
+<div id='score'>score:123</div>
+<div id='bar'  class='gold'><div id='bar_inner'></div></div>
+<div id='message'></div>
