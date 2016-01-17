@@ -129,12 +129,20 @@ function genWaterWay(rectX,rectY,rectW,rectH){
     var y=(t[0].y+t[1].y+t[2].y)/3;
     var area=(t[1].x-t[0].x)*(t[2].y-t[0].y)-(t[1].y-t[0].y)*(t[2].x-t[0].x);
     if(area<0.05)return;
-    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH)triangles.push(t);
+    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH&&!ocean(x,y))triangles.push(t);
   })
   var lines = [];
   allLines.forEach(function(l){
-    if(lineRandom(l))lines.push(l);
-  })
+    var x=(l[0].x+l[1].x)/2,y=(l[0].y+l[1].y)/2;
+    if(lineRandom(l)&&!ocean(x,y))lines.push(l);
+  });
+  function ocean(x,y){
+    x*=0.1;
+    y*=0.1;
+    var a=Math.cos(Math.sin(1.12*x+1.27*y)+Math.cos(1.37*x-1.19*y)+x);
+    var b=Math.cos(Math.sin(2.23*x+1.31*y)+Math.cos(2.31*y-1.13*x)+y);
+    return (a+b)*(a+b)<0.25;
+  }
   return {
     triangles: triangles,
     lines: lines,
@@ -232,6 +240,7 @@ function WaterwayChunk(i,j,n,scale,scene){
   this.items = [];
   for(var i=0;i<10;i++){
     var l=this.lines[Math.floor(this.lines.length*Math.random())];
+    if(!l)continue;
     var item = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
     var t=Math.random();
     item.position.x=l[0].x*t+(1-t)*l[1].x;
