@@ -72,6 +72,7 @@ function genWaterWay(rectX,rectY,rectW,rectH){
       return Math.atan2(a.x-p.x,a.y-p.y)-Math.atan2(b.x-p.x,b.y-p.y);
     });
   });
+  var deadendTriangles = [];
   allPoints.forEach(function(p){
     if(p.points.length<=1)return;
     p.points.sort(function(a,b){
@@ -93,6 +94,12 @@ function genWaterWay(rectX,rectY,rectW,rectH){
         var t=p.tris[i];
         if(t.indexOf(a)>=0&&t.indexOf(b)>=0)return t;
       }
+    }
+    if(sections.length==1&&sections[0][0]==sections[0][sections[0].length-1]){
+      var q=sections[0][0];
+      var t1=triangleFor(q,sections[0][1]);
+      var t2=triangleFor(q,sections[0][sections[0].length-2]);
+      deadendTriangles.push({p:p,q:q,t1:t1,t2:t2});
     }
     if(sections.length==1)return;
     p.sections=sections;
@@ -119,6 +126,16 @@ function genWaterWay(rectX,rectY,rectW,rectH){
       }
     })
   })
+  deadendTriangles.forEach(function(t){
+    var m1=(t.t1.moves&&t.t1.moves[t.t1.indexOf(t.q)])||{x:0,y:0};
+    var m2=(t.t2.moves&&t.t2.moves[t.t2.indexOf(t.q)])||{x:0,y:0};
+    var tri=[
+      t.p,
+      {x:t.q.x-m1.x,y:t.q.y-m1.y},
+      {x:t.q.x-m2.x,y:t.q.y-m2.y}
+    ]
+    allTriangles.push(tri);
+  })
   var triangles = [];
   allTriangles.forEach(function(t){
     for(var i=0;i<3;i++){
@@ -128,7 +145,7 @@ function genWaterWay(rectX,rectY,rectW,rectH){
     var x=(t[0].x+t[1].x+t[2].x)/3;
     var y=(t[0].y+t[1].y+t[2].y)/3;
     var area=(t[1].x-t[0].x)*(t[2].y-t[0].y)-(t[1].y-t[0].y)*(t[2].x-t[0].x);
-    if(area<0.05)return;
+    if(area<0.05&&t.moves&&t.moves[0]&&t.moves[1]&&t.moves[2])return;
     if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH&&!ocean(x,y))triangles.push(t);
   })
   var lines = [];
