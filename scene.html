@@ -36,10 +36,13 @@ document.onkeyup=function(e){
 var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
   {x:0,y:-0.5,r:0.35},
   {x:0,y:-0.25,r:0.45},
-  {x:0,y:0,r:0.5},
+  {x:0,y:-0.05,r:0.5},
+  {x:0,y:0.05,r:0.5},
   {x:0,y:+0.25,r:0.45},
   {x:0,y:+0.5,r:0.35},
-]}
+],
+  roll: {th: 0, dth: 0}
+}
 var camth=pos.th;
 var score=0;
 var barvalue=100;
@@ -137,49 +140,83 @@ function animate(){
       if(!hit)hit=triInside(tri,c)||hitTest(tri,c,p.r);
     })
   })
-  for(var i=0;i<10;i++){
-    var hits;
-    var dt=1;
-    var retry=false;
-    for(var j=0;j<10;j++){
-      var cos=Math.cos(pos.th+pos.rot*dt),sin=Math.sin(pos.th+pos.rot*dt);
-      retry=false
-      hits = [];
-      hitTriangles.forEach(function(tri){
-        pos.shape.forEach(function(p){
-          var c={x:pos.x+pos.vx*dt+p.y*cos-p.x*sin,y:pos.y+pos.vy*dt+p.y*sin+p.x*cos};
-          if(triInside(tri,c))retry=true;
-          var n=hitTest(tri,c,p.r);
-          if(n)hits.push({pos: c, normal: n});
+  var dt=1;
+  function test(){
+    var cos=Math.cos(pos.th+pos.rot*dt),sin=Math.sin(pos.th+pos.rot*dt);
+    var hits = [], hit=false;
+    hitTriangles.forEach(function(tri){
+      pos.shape.forEach(function(p){
+        var c={x:pos.x+pos.vx*dt+p.y*cos-p.x*sin,y:pos.y+pos.vy*dt+p.y*sin+p.x*cos};
+        if(triInside(tri,c))hit=true;
+        var n=hitTest(tri,c,p.r);
+        if(n)hits.push({
+          pos: {x:p.y*cos-p.x*sin,y:p.y*sin+p.x*cos},
+          normal: n,
+          r: p.r
         });
       });
-      if(!retry)break;
-      dt/=2;
+    });
+    if(hits.length==0&&!hit)return null;
+    return hits;
+  }
+  var hits = test();
+  if(hits){
+    var dtok=0;
+    var dtng=1;
+    for(var j=0;j<100;j++){
+      dt=(dtok+dtng)/2;
+      hits=test();
+      if(hits)dtng=dt;
+      else dtok=dt;
     }
-    if(retry){
-      console.error(retry,dt)
-      return;
-    }
-    if(!hit&&!!hits.length){
+    dt=dtng;
+    hits = test(dtng);
+    dt=dtok;
+  }else{
+    dt=1;
+  }
+  pos.x+=pos.vx*dt;pos.y+=pos.vy*dt;
+  pos.th+=pos.rot*dt;
+  dt=0;
+  tmphits=test();
+  if(hits){
+    for(var k=0;k<1;k++){
+      var hoge=0;
       hits.forEach(function(h){
-        var vn=pos.vx*h.normal.x+pos.vy*h.normal.y;
-        if(vn>0){
-          pos.vx-=(1.5*vn)*h.normal.x
-          pos.vy-=(1.5*vn)*h.normal.y
+        var hp={x:h.pos.x+h.normal.x*h.r,y:h.pos.y+h.normal.y*h.r};
+        var hv={x:pos.vx-hp.y*pos.rot,y:pos.vy+hp.x*pos.rot};
+        var vn=hv.x*h.normal.x+hv.y*h.normal.y;
+        if(vn>-0.0){hoge++;
+          console.log('EEE',h.pos.x*h.normal.x+h.pos.y*h.normal.y);
+          var pr=Math.sqrt(hp.x*hp.x+hp.y*hp.y);
+
+          var vpush=hv.x*h.pos.x+hv.y*h.pos.y;
+          var vrot=hv.x*h.pos.y-hv.y*h.pos.x;
+
+          var vf=(h.normal.x*hp.x+h.normal.y*hp.y)/pr;
+          var rf=h.normal.x*hp.y-h.normal.y*hp.x;
+          pos.vx-=1.5*(vn+0.0)*h.normal.x*vf;
+          pos.vy-=1.5*(vn+0.0)*h.normal.y*vf;
+          pos.rot+=rf/4;
         }
+        pos.roll.dth+=2*Math.random()-1;
       });
-      if(pos.vx*pos.vx+pos.vy*pos.vy<0.01*0.01)pos.vx=pos.vy=0;
-      // if(damage==0)damage=1;
-    }else{
-      pos.x+=pos.vx*dt;pos.y+=pos.vy*dt;
-      pos.th+=pos.rot*dt;
-      break;
+      if(hoge==0)break;
     }
+    console.log(k)
   }
   damage=Math.max(damage-0.02,0);
   chara.position.x=pos.x;
   chara.position.y=pos.y;
-  chara.setRotationFromAxisAngle({x:0,y:0,z:1},pos.th)
+  chara.setRotationFromAxisAngle({x:0,y:0,z:1},pos.th);
+  pos.roll.dth-=0.2*(Math.cos(pos.th)*pos.vy-Math.sin(pos.th)*pos.vx);
+  pos.roll.dth*=0.99;pos.roll.th*=0.99;
+  pos.roll.dth/=Math.max(1,Math.abs(pos.roll.dth));
+  pos.roll.th/=Math.max(1,Math.abs(pos.roll.th));
+  pos.roll.th+=pos.roll.dth*0.1;
+  pos.roll.dth-=pos.roll.th*0.1;
+
+  chara.rotateX(pos.roll.th+0.*Math.sin(2*performance.now()/1000));
   pos.rot*=0.8;
   camth=camth*0.8+pos.th*0.2;
   camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
