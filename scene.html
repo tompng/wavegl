@@ -161,17 +161,13 @@ function animate(){
       return;
     }
     if(!hit&&!!hits.length){
-      var normal={x:0,y:0}
       hits.forEach(function(h){
-        normal.x+=h.normal.x;normal.y+=h.normal.y;
+        var vn=pos.vx*h.normal.x+pos.vy*h.normal.y;
+        if(vn>0){
+          pos.vx-=(1.5*vn)*h.normal.x
+          pos.vy-=(1.5*vn)*h.normal.y
+        }
       });
-      var nr=Math.sqrt(normal.x*normal.x+normal.y*normal.y);
-      normal.x/=nr;normal.y/=nr;
-      var vn=pos.vx*normal.x+pos.vy*normal.y;
-      if(vn>0){
-        pos.vx-=1.5*vn*normal.x
-        pos.vy-=1.5*vn*normal.y
-      }
       if(pos.vx*pos.vx+pos.vy*pos.vy<0.01*0.01)pos.vx=pos.vy=0;
       // if(damage==0)damage=1;
     }else{
@@ -224,7 +220,9 @@ function hitTest(tri,p,r){
       min=r2;
     }
   }
-  return pos;
+  if(!pos)return null;
+  var pr=Math.sqrt(pos.x*pos.x+pos.y*pos.y);
+  return {x: pos.x/pr, y: pos.y/pr}
 }
 </script>
 <style>
