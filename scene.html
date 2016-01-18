@@ -11,7 +11,7 @@ onload=function(){
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
   material = new THREE.MeshLambertMaterial({color: 0xffffff})
-  var dlight = new THREE.DirectionalLight(0x222222);
+  var dlight = new THREE.DirectionalLight(0x333333);
   var alight = new THREE.AmbientLight(0x000000);
   dlight.position.set(1, 1, 1).normalize();
   scene.add(dlight,alight);
@@ -67,6 +67,8 @@ function animate(){
   simulator.storePixel('chara4',((pos.x/waveSize%1+1)%1)*512,(((pos.y-1)/waveSize%1+1)%1)*512);
   simulator.storeDone();
   if(arr1&&arr2){
+    var hx=arr1[2]-arr2[2],hy=arr3[2]-arr4[2];
+    pos.roll.dth+=0.2*(Math.cos(pos.th)*hy-Math.sin(pos.th)*hx)
     pos.vx=pos.vx*0.99-(arr1[0]+arr2[0]+arr3[0]+arr4[0]-2)*0.0002;
     pos.vy=pos.vy*0.99-(arr1[1]+arr2[1]+arr3[1]+arr4[1]-2)*0.0002;
     pos.rot=pos.rot*0.99+(arr1[1]-arr2[1]-arr3[0]+arr4[0])*0.001;
