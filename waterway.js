@@ -151,7 +151,7 @@ function genWaterWay(rectX,rectY,rectW,rectH){
   var lines = [];
   allLines.forEach(function(l){
     var x=(l[0].x+l[1].x)/2,y=(l[0].y+l[1].y)/2;
-    if(lineRandom(l)&&!ocean(x,y))lines.push(l);
+    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH&&lineRandom(l)&&!ocean(x,y))lines.push(l);
   });
   function ocean(x,y){
     x*=0.1;
@@ -280,7 +280,7 @@ function WaterwayChunk(i,j,n,scale,scene){
   scene.add(this.trimesh2);
 
   this.items = [];
-  for(var i=0;i<10;i++){
+  for(var i=0;i<20;i++){
     var l=this.lines[Math.floor(this.lines.length*Math.random())];
     if(!l)continue;
     var item = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
