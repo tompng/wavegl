@@ -59,12 +59,17 @@ function animate(){
   simulator.storeLoad();
   var arr1=simulator.readStoredPixel('chara1');
   var arr2=simulator.readStoredPixel('chara2');
+  var arr3=simulator.readStoredPixel('chara3');
+  var arr4=simulator.readStoredPixel('chara4');
   simulator.storePixel('chara1',(((pos.x+1)/waveSize%1+1)%1)*512,((pos.y/waveSize%1+1)%1)*512);
   simulator.storePixel('chara2',(((pos.x-1)/waveSize%1+1)%1)*512,((pos.y/waveSize%1+1)%1)*512);
+  simulator.storePixel('chara3',((pos.x/waveSize%1+1)%1)*512,(((pos.y+1)/waveSize%1+1)%1)*512);
+  simulator.storePixel('chara4',((pos.x/waveSize%1+1)%1)*512,(((pos.y-1)/waveSize%1+1)%1)*512);
   simulator.storeDone();
   if(arr1&&arr2){
-    pos.vx=pos.vx*0.99-(arr1[0]+arr2[0]-1)*0.0005;
-    pos.vy=pos.vy*0.99-(arr1[1]+arr2[1]-1)*0.0005;
+    pos.vx=pos.vx*0.99-(arr1[0]+arr2[0]+arr3[0]+arr4[0]-2)*0.0002;
+    pos.vy=pos.vy*0.99-(arr1[1]+arr2[1]+arr3[1]+arr4[1]-2)*0.0002;
+    pos.rot=pos.rot*0.99+(arr1[1]-arr2[1]-arr3[0]+arr4[0])*0.001;
   }
   var chunkx=Math.round(pos.x/chunkSize/scale);
   var chunky=Math.round(pos.y/chunkSize/scale);
