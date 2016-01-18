@@ -327,8 +327,8 @@ WaveSimulator.renderShader = function(size){
   void main(){
     float fx=fetch(xyposition/size+dx).z-fetch(xyposition/size-dx).z;
     float fy=fetch(xyposition/size+dy).z-fetch(xyposition/size-dy).z;
-    fx=fx*0.25+xyposition.x*0.001;
-    fy=fy*0.25+xyposition.y*0.001;
+    fx=fx*0.1+xyposition.x*0.001;
+    fy=fy*0.1+xyposition.y*0.001;
     float dxt=fx-time*0.002,dyt=fy-time*0.001;
     float hoge=sin(200.*dxt)*sin(200.*dyt);
     float fuga=sin(130.*dxt+120.*dyt)*sin(120.*dxt-130.*dyt);
