@@ -10,7 +10,9 @@ onload=function(){
   camera.lookAt({x:0,y:0,z:0});
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
-  material = new THREE.MeshLambertMaterial({color: 0xffffff})
+  material = new THREE.MeshLambertMaterial({color: 0xffffff});
+  wallshader1 = WaveSimulator.wallShader1();
+  wallshader2 = WaveSimulator.wallShader2();
   var dlight = new THREE.DirectionalLight(0x333333);
   var alight = new THREE.AmbientLight(0x000000);
   dlight.position.set(1, 1, 1).normalize();
@@ -83,6 +85,8 @@ function animate(){
         console.log('gen',i,j);
         chunk=chunks[[i,j]]=new WaterwayChunk(i,j,chunkSize,scale,scene);
         chunk.mesh.material=material;
+        chunk.trimesh1.material=wallshader1;
+        chunk.trimesh2.material=wallshader2;
       }
       chunk.count=0;
     }
@@ -256,7 +260,10 @@ function animate(){
   })
   simulator.calc();
   renderer.autoClear=false;
-  plane.visible=chara.visible=false;
+  scene.children.forEach(function(mesh){
+    mesh.wasvisible=mesh.visible;
+    mesh.visible=!!mesh.wall1||!!mesh.wall2||(!!mesh.item&&mesh.visible);
+  })
   var wavePixels=512;
   var cornerPos={
     x:Math.round(wavePixels*(pos.x/waveSize+0.5)),
@@ -292,7 +299,10 @@ function animate(){
   renderer.render(scene, wcamera, simulator.wave);  
 
   renderer.setViewport(0,0,width,height)
-  plane.visible=chara.visible=true;
+  scene.children.forEach(function(mesh){
+    mesh.visible=mesh.wasvisible;
+  });
+
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=performance.now()/1000;
   plane.material.uniforms.texture.value=simulator.wave;

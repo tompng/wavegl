@@ -291,6 +291,37 @@ WaveSimulator.waveShader = function(size){
   */
 }
 
+WaveSimulator.wallShader1 = function(){
+  return new THREE.ShaderMaterial({
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
+    transparent: true,
+    depthTest: false,
+    blending: THREE.MultiplyBlending,
+  });
+  /*VERT
+  void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}
+  */
+  /*FRAG
+  void main(){gl_FragColor=vec4(0,0,1,1);}
+  */
+}
+WaveSimulator.wallShader2 = function(){
+  return new THREE.ShaderMaterial({
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
+    transparent: true,
+    depthTest: false,
+    blending: THREE.AdditiveBlending,
+  });
+  /*VERT
+  void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}
+  */
+  /*FRAG
+  void main(){gl_FragColor=vec4(0.5,0.5,0,1);}
+  */
+}
+
 WaveSimulator.renderShader = function(size){
   return new THREE.ShaderMaterial({
     uniforms: {

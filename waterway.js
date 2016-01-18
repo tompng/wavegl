@@ -254,6 +254,31 @@ function WaterwayChunk(i,j,n,scale,scene){
   });
   scene.add(this.mesh);
 
+  var triarr=new Float32Array(triangles.length*9);
+  for(var i=0;i<triangles.length;i++){
+    var tri=triangles[i];
+    for(var j=0;j<3;j++){
+      var a=tri[j],b=tri[(j+1)%3],c=tri[(j+2)%3];
+      var db={x:b.x-a.x,y:b.y-a.y},rb=Math.sqrt(db.x*db.x+db.y*db.y);
+      var dc={x:c.x-a.x,y:c.y-a.y},rc=Math.sqrt(dc.x*dc.x+dc.y*dc.y);
+      var cos=(db.x*dc.x+db.y*dc.y)/rb/rc;
+      var sin=Math.sqrt(1-cos*cos);
+      triarr[9*i+3*j+0]=a.x+(db.x/rb+dc.x/rc)/sin*0.1;
+      triarr[9*i+3*j+1]=a.y+(db.y/rb+dc.y/rc)/sin*0.1;
+      triarr[9*i+3*j+2]=0;
+    }
+  }
+  var trigeometry=new THREE.BufferGeometry();
+  trigeometry.addAttribute('position', new THREE.BufferAttribute(triarr, 3));
+  this.trimesh1 = new THREE.Mesh(trigeometry);
+  this.trimesh1.visible=false;
+  this.trimesh1.wall1=true;
+  this.trimesh2 = new THREE.Mesh(trigeometry);
+  this.trimesh2.visible=false;
+  this.trimesh2.wall2=true;
+  scene.add(this.trimesh1)
+  scene.add(this.trimesh2);
+
   this.items = [];
   for(var i=0;i<10;i++){
     var l=this.lines[Math.floor(this.lines.length*Math.random())];
@@ -265,18 +290,21 @@ function WaterwayChunk(i,j,n,scale,scene){
     item.rotateX(Math.random());
     item.rotateY(Math.random());
     item.rotateZ(Math.random());
+    item.item=true;
     scene.add(item);
     this.items.push(item);
   }
 
   this.dispose = function(){
-    scene.remove(this.mesh);
     this.items.forEach(function(item){
       item.geometry.dispose();
       scene.remove(item);
     })
-    scene.remove(this.item);
+    trigeometry.dispose();
+    scene.remove(this.trimesh1);
+    scene.remove(this.trimesh2);
     geometry.dispose();
+    scene.remove(this.mesh);
   }
   this.update = function(pos){
     var count = 0;
