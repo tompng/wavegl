@@ -290,3 +290,61 @@ WaveSimulator.waveShader = function(size){
   }
   */
 }
+
+WaveSimulator.renderShader = function(size){
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      time: {type: "f"},
+      size: {type: "f"},
+      texture: {type: "t"}
+    },
+    defines: {SIZE: size.toFixed(2)},
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG')
+  });
+  /*VERT
+  varying vec2 xyposition;
+  void main(){
+    xyposition = (modelMatrix * vec4(position,1)).xy;
+    gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);
+  }
+  */
+  /*FRAG
+  varying vec2 xyposition;
+  uniform sampler2D texture;
+  uniform float size, time;
+  const vec2 dx = vec2(1.0/SIZE, 0);
+  const vec2 dy = vec2(0, 1.0/SIZE);
+  vec4 fetch(vec2 uv){
+    vec2 p = SIZE*uv;
+    vec2 ip = floor(p);
+    vec2 d=p-ip;
+    return texture2D(texture, ip/SIZE)*(1.0-d.x)*(1.0-d.y)+
+    texture2D(texture, ip/SIZE+dx)*d.x*(1.0-d.y)+
+    texture2D(texture, ip/SIZE+dy)*(1.0-d.x)*d.y+
+    texture2D(texture, ip/SIZE+dx+dy)*d.x*d.y;
+  }
+  void main(){
+    float fx=fetch(xyposition/size+dx).z-fetch(xyposition/size-dx).z;
+    float fy=fetch(xyposition/size+dy).z-fetch(xyposition/size-dy).z;
+    fx=fx*0.25+xyposition.x*0.001;
+    fy=fy*0.25+xyposition.y*0.001;
+    float dxt=fx-time*0.002,dyt=fy-time*0.001;
+    float hoge=sin(200.*dxt)*sin(200.*dyt);
+    float fuga=sin(130.*dxt+120.*dyt)*sin(120.*dxt-130.*dyt);
+    float piyo=sin(60.*dxt+80.*dyt)*sin(80.*dxt-60.*dyt);
+    float aaa=sin(410.*fx+780.*fy)*sin(780.*fx-410.*fy);
+    aaa=aaa*aaa;aaa=aaa*aaa;
+    float bbb=sin(530.*fx+770.*fy)*sin(770.*fx-530.*fy);
+    bbb=bbb*bbb;bbb=bbb*bbb;
+    float ccc=sin(750.*fx+490.*fy)*sin(490.*fx-750.*fy);
+    ccc=ccc*ccc;ccc=ccc*ccc;
+    float geso=aaa+bbb+ccc;geso=geso*geso;
+    vec3 rgb=vec3(hoge,fuga,piyo);
+    rgb=0.8*rgb*rgb*rgb*rgb*rgb*rgb+0.08*vec3(1,1,1)*geso;
+    gl_FragColor.rgb = vec3(0,0,0.1)+(rgb+dot(rgb,vec3(1,1,1))*vec3(1,1,1))/2.0;
+    //gl_FragColor.rgb=vec3((uvha.a-0.5)*10.0,1,1)*(0.5+(uvha.z-0.5)*2.0);
+    gl_FragColor.a = 1.0;
+  }
+  */
+}

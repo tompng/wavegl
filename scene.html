@@ -10,15 +10,17 @@ onload=function(){
   camera.lookAt({x:0,y:0,z:0});
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
-  material = new THREE.MeshLambertMaterial({color: 0x887766})
-  var dlight = new THREE.DirectionalLight(0x999999);
-  var alight = new THREE.AmbientLight(0x666666);
+  material = new THREE.MeshLambertMaterial({color: 0xffffff})
+  var dlight = new THREE.DirectionalLight(0x222222);
+  var alight = new THREE.AmbientLight(0x000000);
   dlight.position.set(1, 1, 1).normalize();
   scene.add(dlight,alight);
   chara = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 1), material);
   scene.add(chara);
   var size=10;
   scale=20;
+  plane = new THREE.Mesh(new THREE.PlaneGeometry(64, 64), WaveSimulator.renderShader(512));
+  scene.add(plane);
   renderer = new THREE.WebGLRenderer();
   simulator = new WaveSimulator(512, renderer);
   renderer.setClearColor(new THREE.Color(0xaaaaaa));
@@ -225,6 +227,20 @@ function animate(){
   camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
   camera.rotateZ(camth-Math.PI/2)
   camera.rotateX(0.2);
+  plane.position.x=pos.x;
+  plane.position.y=pos.y;
+  var waveSize=32;
+  simulator.disturb({
+    center: new THREE.Vector2((pos.x/waveSize%1+1)%1,(pos.y/waveSize%1+1)%1),
+    overwrite: 1,
+    radius: 0.02,
+    scale: new THREE.Vector4(0.99,0.99,0.99,0.999),
+    value: new THREE.Vector4(-pos.vx*4,-pos.vy*4,0,0)
+  })
+  simulator.calc();
+  plane.material.uniforms.size.value=waveSize;
+  plane.material.uniforms.time.value=performance.now()/1000;
+  plane.material.uniforms.texture.value=simulator.wave;
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
