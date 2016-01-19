@@ -335,3 +335,129 @@ function WaterwayChunk(i,j,n,scale,scene){
   }
 }
 
+function gondolaMesh(){
+  var xsize=1.6,ysize=1,zsize=0.5;
+  function coords(t){
+    var cos=Math.cos(2*Math.PI*t);
+    var sin=Math.sin(2*Math.PI*t);
+    var p={x: xsize*cos/2, y: ysize*sin/2};
+    var n={x: ysize*cos/2, y: xsize*sin/2};
+    var r=Math.sqrt(p.x*p.x+p.y*p.y);
+    var nr=Math.sqrt(n.x*n.x+n.y*n.y);
+    return {x: p.x, y: p.y, r: r, nx: n.x/nr, ny: n.y/nr};
+  }
+  var nth=0.2;
+  var nxy=Math.cos(nth),nz=-Math.sin(nth);
+  var nr=zsize*Math.tan(nth);
+  var positions=[];
+  var normals=[];
+  var N=16;
+  for(var i=0;i<N;i++){
+    var t1=i/N,t2=(i+1)/N;
+    var p1=coords(t1), p2=coords(t2);
+    positions.push(0, 0, zsize/2);
+    positions.push(p1.x, p1.y, zsize/2);
+    positions.push(p2.x, p2.y, zsize/2);
+    normals.push(0,0,1,0,0,1,0,0,1);
+    positions.push(p1.x, p1.y, zsize/2);
+    positions.push(p1.x-p1.nx*nr, p1.y-p1.ny*nr, -zsize/2);
+    positions.push(p2.x-p2.nx*nr, p2.y-p2.ny*nr, -zsize/2);
+    positions.push(p1.x, p1.y, zsize/2);
+    positions.push(p2.x-p2.nx*nr, p2.y-p2.ny*nr, -zsize/2);
+    positions.push(p2.x, p2.y, zsize/2);
+    var n1={x: p1.nx*nxy, y: p1.ny*nxy, z: nz}
+    var n2={x: p2.nx*nxy, y: p2.ny*nxy, z: nz}
+    normals.push(n1.x, n1.y, n1.z);
+    normals.push(n1.x, n1.y, n1.z);
+    normals.push(n2.x, n2.y, n2.z);
+    normals.push(n1.x, n1.y, n1.z);
+    normals.push(n2.x, n2.y, n2.z);
+    normals.push(n2.x, n2.y, n2.z);
+  }
+  var varr = new Float32Array(positions);
+  var narr = new Float32Array(normals);
+  geometry = new THREE.BufferGeometry();
+  geometry.addAttribute('position', new THREE.BufferAttribute(varr, 3));
+  geometry.addAttribute('normal', new THREE.BufferAttribute(narr, 3));
+  return new THREE.Mesh(geometry);
+}
+
+function Undine(material){
+  var sphere=new THREE.SphereGeometry(1, 8, 8);
+  var head=new THREE.Mesh(sphere, material);
+  var arms=[[],[]];
+  var legs=[[],[]];
+  var oar=[];
+  this.meshes=[];
+  var body=[];
+  var N=10;
+  for(var i=0;i<N;i++){
+    var a0=new THREE.Mesh(sphere, material);
+    var a1=new THREE.Mesh(sphere, material);
+    var l0=new THREE.Mesh(sphere, material);
+    var l1=new THREE.Mesh(sphere, material);
+    var b=new THREE.Mesh(sphere, material);
+    var o=new THREE.Mesh(sphere, material);
+    var t=i/(N-1);
+    a0.t=a1.t=l0.t=l1.t=b.t=o.t=t;
+    a0.dir=-1;a1.dir=1;l0.dir=-1;l1.dir=1;
+    arms[0].push(a0);arms[1].push(a1);
+    legs[0].push(l0);legs[1].push(l1);
+    oar.push(o);body.push(b);
+    a0.size=a1.size=0.2;
+    l0.size=l1.size=0.2;
+    b.size=0.4;
+    o.size=0.15;
+  }
+  head.size=0.6;
+  var meshes=[];
+  this.meshes=meshes;
+  meshes.push(head);
+  arms.forEach(function(arm){arm.forEach(function(a){meshes.push(a)})});
+  legs.forEach(function(leg){leg.forEach(function(l){meshes.push(l)})});
+  body.forEach(function(b){meshes.push(b)});
+  oar.forEach(function(o){meshes.push(o)});
+  this.update = function(pos, th, roll, scale, xdiff){
+    var t=performance.now()/1000;
+    var bodyLeg={x:0.25+0.2*Math.sin(t*8),y:0.2*Math.sin(t*9)-Math.sin(roll),z:0.5};
+    var bodyArm={x:0.8*bodyLeg.x+0.5+0.2*Math.sin(t*7),y:0.8*bodyLeg.y+0.1*Math.sin(t*7),z:bodyLeg.z+0.5};
+    var oar0;
+    head.pos={x:bodyArm.x,y:bodyArm.y,z:bodyArm.z+0.6};
+    arms.forEach(function(arm){
+      arm.forEach(function(a){
+        var ath=Math.PI/4+Math.sin((10+a.dir/2)*t)
+        var dx=Math.sin((11+a.dir)*t);
+        var dy=Math.cos(ath)
+        var dz=Math.sin(ath)
+        var p0={x:bodyArm.x,y:bodyArm.y+0.4*a.dir,z:bodyArm.z};
+        var p1={x:bodyArm.x+0.2*dx,y:bodyArm.y+(0.4+0.5*dy)*a.dir,z:bodyArm.z-0.5*dz};
+        if(a.dir==-1&&a.t==1)oar0=p1;
+        a.pos={x:p0.x*(1-a.t)+a.t*p1.x,y:p0.y*(1-a.t)+a.t*p1.y,z:p0.z*(1-a.t)+a.t*p1.z};
+      })
+    })
+    legs.forEach(function(leg){
+      leg.forEach(function(l){
+        var p0={x:bodyLeg.x,y:bodyLeg.y+0.3*l.dir,z:bodyLeg.z};
+        var p1={x:0,y:0.4*l.dir-Math.sin(roll),z:-l.dir*Math.sin(roll)};
+        l.pos={x:p0.x*(1-l.t)+l.t*p1.x,y:p0.y*(1-l.t)+l.t*p1.y,z:p0.z*(1-l.t)+l.t*p1.z};
+      })
+    })
+    body.forEach(function(b){
+      var p0=bodyArm,p1=bodyLeg;
+      b.pos={x:p0.x*(1-b.t)+b.t*p1.x,y:p0.y*(1-b.t)+b.t*p1.y,z:p0.z*(1-b.t)+b.t*p1.z};
+    })
+    oar.forEach(function(o){
+      var p0=oar0;
+      var p1={x: Math.sin(8*t),y:-1.5,z:-0.1};
+      o.pos={x:p0.x*(1-o.t)+o.t*p1.x,y:p0.y*(1-o.t)+o.t*p1.y,z:p0.z*(1-o.t)+o.t*p1.z};
+    })
+    var cos=Math.cos(th), sin=Math.sin(th);
+    meshes.forEach(function(m){
+      var x=m.pos.x+xdiff/scale, y=m.pos.y, z=m.pos.z;
+      m.position.x=pos.x+(x*cos-y*sin)*scale
+      m.position.y=pos.y+(x*sin+y*cos)*scale
+      m.position.z=pos.z+z*scale;
+      m.scale.x=m.scale.y=m.scale.z=m.size*scale;
+    })
+  }
+}

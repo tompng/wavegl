@@ -20,7 +20,10 @@ onload=function(){
   var alight = new THREE.AmbientLight(0x000000);
   dlight.position.set(1, 1, 1).normalize();
   scene.add(dlight,alight);
-  chara = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 1), material);
+  chara = gondolaMesh();
+  undine = new Undine(material);
+  undine.meshes.forEach(function(m){scene.add(m)});
+  chara.material = material;
   scene.add(chara);
   var size=10;
   scale=20;
@@ -241,6 +244,8 @@ function animate(){
   pos.roll.th/=Math.max(1,Math.abs(pos.roll.th));
   pos.roll.th+=pos.roll.dth*0.1;
   pos.roll.dth-=pos.roll.th*0.1;
+
+  undine.update({x:pos.x,y:pos.y,z:1}, pos.th, pos.roll.th, 0.3, -0.5);
 
   chara.rotateX(pos.roll.th+0.*Math.sin(2*performance.now()/1000));
   pos.rot*=0.8;
