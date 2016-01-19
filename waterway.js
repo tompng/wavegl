@@ -263,8 +263,9 @@ function WaterwayChunk(i,j,n,scale,scene){
       var dc={x:c.x-a.x,y:c.y-a.y},rc=Math.sqrt(dc.x*dc.x+dc.y*dc.y);
       var cos=(db.x*dc.x+db.y*dc.y)/rb/rc;
       var sin=Math.sqrt(1-cos*cos);
-      triarr[9*i+3*j+0]=a.x+(db.x/rb+dc.x/rc)/sin*0.1;
-      triarr[9*i+3*j+1]=a.y+(db.y/rb+dc.y/rc)/sin*0.1;
+      var reduce=0.2;
+      triarr[9*i+3*j+0]=a.x+(db.x/rb+dc.x/rc)/sin*reduce;
+      triarr[9*i+3*j+1]=a.y+(db.y/rb+dc.y/rc)/sin*reduce;
       triarr[9*i+3*j+2]=0;
     }
   }

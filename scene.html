@@ -242,7 +242,7 @@ function animate(){
 
   undine.update({x:pos.x,y:pos.y,z:1}, pos.th, pos.roll.th, 0.3, -0.5);
 
-  chara.rotateX(pos.roll.th+0.*Math.sin(2*performance.now()/1000));
+  chara.rotateX(pos.roll.th);
   pos.rot*=0.8;
   camth=camth*0.8+pos.th*0.2;
   camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
@@ -309,10 +309,18 @@ function animate(){
     mesh.visible=mesh.wasvisible;
   });
 
+  var t=performance.now()/1000;
   plane.material.uniforms.size.value=waveSize;
-  plane.material.uniforms.time.value=performance.now()/1000;
+  plane.material.uniforms.time.value=t;
   plane.material.uniforms.texture.value=simulator.wave;
-  mapmaterial.uniforms.light.value=new THREE.Vector3(pos.x+Math.cos(pos.th),pos.y+Math.sin(pos.th),2)
+  var brightness=1+0.1*(
+    Math.sin(13.7*t)+Math.sin(7.3*t)+Math.sin(10.3*t)+Math.sin(11.3*t));
+  mapmaterial.uniforms.lightColor.value=new THREE.Vector3(
+    0.5*brightness,
+    0.3*brightness,
+    0
+  );
+  mapmaterial.uniforms.lightPosition.value=new THREE.Vector3(pos.x+Math.cos(pos.th),pos.y+Math.sin(pos.th),1.2);
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
@@ -353,7 +361,8 @@ function hitTest(tri,p,r){
 mapShader = function(){
   return new THREE.ShaderMaterial({
     uniforms: {
-      light: {type: "v3"},
+      lightPosition: {type: "v3"},
+      lightColor: {type: "v3"}
     },
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
@@ -368,13 +377,13 @@ mapShader = function(){
   */
   /*FRAG
   varying vec3 gpos, norm;
-  uniform vec3 light;
+  uniform vec3 lightPosition, lightColor;
   void main(){
-    vec3 ldif=gpos-light;
+    vec3 ldif=gpos-lightPosition;
     float lr=dot(ldif,ldif);
     float lval1=max(-dot(norm,ldif),0.0)/(1.0+lr*lr*0.05);
     float lval2=0.5+0.5*dot(norm,vec3(1,1,1));
-    gl_FragColor.rgb=vec3(0.5,0.3,0)*lval1+lval2*vec3(0.05,0.05,0.1);
+    gl_FragColor.rgb=lightColor*lval1+lval2*vec3(0.05,0.05,0.1);
     gl_FragColor.a=1.0;
   }
   */
