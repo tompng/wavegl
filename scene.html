@@ -12,18 +12,13 @@ onload=function(){
   camera.lookAt({x:0,y:0,z:0});
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
-  material = new THREE.MeshLambertMaterial({color: 0xffffff});
   mapmaterial = mapShader();
   wallshader1 = WaveSimulator.wallShader1();
   wallshader2 = WaveSimulator.wallShader2();
-  var dlight = new THREE.DirectionalLight(0x886622);
-  var alight = new THREE.AmbientLight(0x000000);
-  dlight.position.set(1, 1, 1).normalize();
-  scene.add(dlight,alight);
   chara = gondolaMesh();
-  undine = new Undine(material);
+  undine = new Undine(mapmaterial);
   undine.meshes.forEach(function(m){scene.add(m)});
-  chara.material = material;
+  chara.material = mapmaterial;
   scene.add(chara);
   var size=10;
   scale=20;
@@ -317,7 +312,7 @@ function animate(){
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=performance.now()/1000;
   plane.material.uniforms.texture.value=simulator.wave;
-  mapmaterial.uniforms.light.value=new THREE.Vector3(pos.x,pos.y,0)
+  mapmaterial.uniforms.light.value=new THREE.Vector3(pos.x+Math.cos(pos.th),pos.y+Math.sin(pos.th),2)
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
@@ -367,7 +362,7 @@ mapShader = function(){
   varying vec3 gpos, norm;
   void main(){
     gpos=(modelMatrix*vec4(position,1)).xyz;
-    norm=(modelMatrix*vec4(normal,1)).xyz;
+    norm=normalize((modelMatrix*vec4(normal,0)).xyz);
     gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);
   }
   */
