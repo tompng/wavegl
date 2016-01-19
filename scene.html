@@ -2,7 +2,8 @@
 <script src="waterway.js"></script>
 <script src="wave.js"></script>
 <script>
-var width=800,height=600
+var width=800,height=600;
+var wavePixels=256;
 onload=function(){
   camera = new THREE.Camera();
   camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
@@ -22,10 +23,10 @@ onload=function(){
   scene.add(chara);
   var size=10;
   scale=20;
-  plane = new THREE.Mesh(new THREE.PlaneGeometry(64, 64), WaveSimulator.renderShader(512));
+  plane = new THREE.Mesh(new THREE.PlaneGeometry(64, 64), WaveSimulator.renderShader(wavePixels));
   scene.add(plane);
   renderer = new THREE.WebGLRenderer();
-  simulator = new WaveSimulator(512, renderer);
+  simulator = new WaveSimulator(wavePixels, renderer);
   renderer.setClearColor(new THREE.Color(0xaaaaaa));
   renderer.setSize(800,600);
   document.body.appendChild(renderer.domElement);
@@ -48,7 +49,7 @@ var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
 ],
   roll: {th: 0, dth: 0}
 }
-var waveSize=32;
+var waveSize=24;
 var camth=pos.th;
 var score=0;
 var barvalue=100;
@@ -64,10 +65,10 @@ function animate(){
   var arr2=simulator.readStoredPixel('chara2');
   var arr3=simulator.readStoredPixel('chara3');
   var arr4=simulator.readStoredPixel('chara4');
-  simulator.storePixel('chara1',(((pos.x+1)/waveSize%1+1)%1)*512,((pos.y/waveSize%1+1)%1)*512);
-  simulator.storePixel('chara2',(((pos.x-1)/waveSize%1+1)%1)*512,((pos.y/waveSize%1+1)%1)*512);
-  simulator.storePixel('chara3',((pos.x/waveSize%1+1)%1)*512,(((pos.y+1)/waveSize%1+1)%1)*512);
-  simulator.storePixel('chara4',((pos.x/waveSize%1+1)%1)*512,(((pos.y-1)/waveSize%1+1)%1)*512);
+  simulator.storePixel('chara1',(((pos.x+1)/waveSize%1+1)%1)*wavePixels,((pos.y/waveSize%1+1)%1)*wavePixels);
+  simulator.storePixel('chara2',(((pos.x-1)/waveSize%1+1)%1)*wavePixels,((pos.y/waveSize%1+1)%1)*wavePixels);
+  simulator.storePixel('chara3',((pos.x/waveSize%1+1)%1)*wavePixels,(((pos.y+1)/waveSize%1+1)%1)*wavePixels);
+  simulator.storePixel('chara4',((pos.x/waveSize%1+1)%1)*wavePixels,(((pos.y-1)/waveSize%1+1)%1)*wavePixels);
   simulator.storeDone();
   if(arr1&&arr2){
     var hx=arr1[2]-arr2[2],hy=arr3[2]-arr4[2];
@@ -269,7 +270,6 @@ function animate(){
     }
     mesh.visible=!!mesh.wall1||!!mesh.wall2||(!!mesh.item&&mesh.visible);
   })
-  var wavePixels=512;
   var cornerPos={
     x:Math.round(wavePixels*(pos.x/waveSize+0.5)),
     y:Math.round(wavePixels*(pos.y/waveSize+0.5))
