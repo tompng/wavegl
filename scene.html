@@ -3,6 +3,7 @@
 <script src="wave.js"></script>
 <script>
 var width=800,height=600;
+var waveSize=32;
 var wavePixels=256;
 onload=function(){
   camera = new THREE.Camera();
@@ -23,7 +24,7 @@ onload=function(){
   scene.add(chara);
   var size=10;
   scale=20;
-  plane = new THREE.Mesh(new THREE.PlaneGeometry(64, 64), WaveSimulator.renderShader(wavePixels));
+  plane = new THREE.Mesh(new THREE.PlaneGeometry(waveSize, waveSize), WaveSimulator.renderShader(wavePixels));
   scene.add(plane);
   renderer = new THREE.WebGLRenderer();
   simulator = new WaveSimulator(wavePixels, renderer);
@@ -49,7 +50,6 @@ var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
 ],
   roll: {th: 0, dth: 0}
 }
-var waveSize=24;
 var camth=pos.th;
 var score=0;
 var barvalue=100;
