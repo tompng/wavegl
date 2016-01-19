@@ -422,20 +422,22 @@ function Undine(material){
   oar.forEach(function(o){meshes.push(o)});
   this.update = function(pos, th, roll, scale, xdiff){
     var t=performance.now()/1000;
-    var bodyLeg={x:0.25+0.1*Math.sin(t*8),y:0.1*Math.sin(t*6.2)-Math.sin(roll),z:0.5};
-    var bodyArm={x:0.8*bodyLeg.x+0.5+0.1*Math.sin(t*5.3),y:0.8*bodyLeg.y+0.1*Math.sin(t*4.9),z:bodyLeg.z+0.5};
-    var oar0;
+    var oarval=Math.sin(t*7.5);
+    var bodyLeg={x:0.25+0.1*oarval+0.1*Math.sin(t*8),y:0.1*Math.sin(t*6.2)-Math.sin(roll),z:0.5};
+    var bodyArm={x:0.8*bodyLeg.x+0.1*oarval+0.5+0.1*Math.sin(t*5.3),y:0.8*bodyLeg.y+0.1*Math.sin(t*4.9),z:bodyLeg.z+0.5};
+    var armth=Math.PI/4+0.2*Math.sin(7.9*t);
+    var armdx=Math.sin(7.1*t)+oarval;
+    var armdy=Math.cos(armth);
+    var armdz=Math.sin(armth)+oarval;
+    var oar0={x:bodyArm.x+0.6+0.5*armdx,y:bodyArm.y+0.4+0.5*armdy,z:bodyArm.z-0.5*armdz}
+    var oar1={x: 0.4,y:-1.4,z:0.2};
     head.pos={x:bodyArm.x,y:bodyArm.y,z:bodyArm.z+0.6};
     hat.pos={x:head.pos.x-0.1,y:head.pos.y,z:head.pos.z+0.3};
     arms.forEach(function(arm){
       arm.forEach(function(a){
-        var ath=Math.PI/4+0.2*Math.sin((7+a.dir/2)*t);
-        var dx=Math.sin((7+a.dir/3)*t);
-        var dy=Math.cos(ath);
-        var dz=Math.sin(ath);
         var p0={x:bodyArm.x,y:bodyArm.y+0.4*a.dir,z:bodyArm.z};
-        var p1={x:bodyArm.x+(3-a.dir)*0.2*dx,y:bodyArm.y+(0.4+0.5*dy)*a.dir,z:bodyArm.z-0.5*dz};
-        if(a.dir==-1&&a.t==1)oar0=p1;
+        var ta=0.7;
+        var p1=a.dir==1?oar0:{x:oar0.x*(1-ta)+ta*oar1.x,y:oar0.y*(1-ta)+ta*oar1.y,z:oar0.z*(1-ta)+ta*oar1.z}
         a.pos={x:p0.x*(1-a.t)+a.t*p1.x,y:p0.y*(1-a.t)+a.t*p1.y,z:p0.z*(1-a.t)+a.t*p1.z};
       })
     })
@@ -452,13 +454,13 @@ function Undine(material){
     })
     oar.forEach(function(o){
       var p0=oar0;
-      var p1={x: 0.2,y:-1.4,z:0.2};
+      var p1=oar1;
       var t=o.t*1.5;
       o.pos={x:p0.x*(1-t)+t*p1.x,y:p0.y*(1-t)+t*p1.y,z:p0.z*(1-t)+t*p1.z};
     })
     var cos=Math.cos(th), sin=Math.sin(th);
     meshes.forEach(function(m){
-      var x=m.pos.x+xdiff/scale, y=m.pos.y, z=m.pos.z;
+      var x=m.pos.x+xdiff/scale, y=0.2+m.pos.y, z=m.pos.z;
       m.position.x=pos.x+(x*cos-y*sin)*scale
       m.position.y=pos.y+(x*sin+y*cos)*scale
       m.position.z=pos.z+z*scale;
