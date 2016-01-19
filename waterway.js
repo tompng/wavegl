@@ -323,11 +323,10 @@ function WaterwayChunk(i,j,n,scale,scene){
         count++;
       }else if(item.phase!==undefined){
         var t=item.phase*item.phase;
-        item.scale.x=1-t;
-        item.scale.y=1-t;
-        item.scale.z=1-t;
-        item.position.x=item.original.x*(1-t)+t*pos.x;
-        item.position.y=item.original.y*(1-t)+t*pos.y;
+        var s=(1-t*t)*(1+16*t*Math.exp(-4*t));
+        item.scale.x=item.scale.y=item.scale.z=s;
+        item.position.x=item.original.x*(1-t*t)+t*t*pos.x;
+        item.position.y=item.original.y*(1-t*t)+t*t*pos.y;
         item.phase+=dt;
         if(item.phase>=1)item.visible=false;
       }
