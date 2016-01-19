@@ -11,9 +11,10 @@ onload=function(){
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
   material = new THREE.MeshLambertMaterial({color: 0xffffff});
+  mapmaterial = mapShader();
   wallshader1 = WaveSimulator.wallShader1();
   wallshader2 = WaveSimulator.wallShader2();
-  var dlight = new THREE.DirectionalLight(0x333333);
+  var dlight = new THREE.DirectionalLight(0x886622);
   var alight = new THREE.AmbientLight(0x000000);
   dlight.position.set(1, 1, 1).normalize();
   scene.add(dlight,alight);
@@ -84,7 +85,7 @@ function animate(){
       if(!chunk){
         console.log('gen',i,j);
         chunk=chunks[[i,j]]=new WaterwayChunk(i,j,chunkSize,scale,scene);
-        chunk.mesh.material=material;
+        chunk.mesh.material=mapmaterial;
         chunk.trimesh1.material=wallshader1;
         chunk.trimesh2.material=wallshader2;
       }
@@ -262,6 +263,10 @@ function animate(){
   renderer.autoClear=false;
   scene.children.forEach(function(mesh){
     mesh.wasvisible=mesh.visible;
+    if(mesh.item){
+      mesh.scalewas=mesh.scale.x;
+      mesh.scale.x=mesh.scale.y=mesh.scale.z=mesh.scalewas*0.5;
+    }
     mesh.visible=!!mesh.wall1||!!mesh.wall2||(!!mesh.item&&mesh.visible);
   })
   var wavePixels=512;
@@ -300,12 +305,14 @@ function animate(){
 
   renderer.setViewport(0,0,width,height)
   scene.children.forEach(function(mesh){
+    if(mesh.item)mesh.scale.x=mesh.scale.y=mesh.scale.z=mesh.scalewas;
     mesh.visible=mesh.wasvisible;
   });
 
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=performance.now()/1000;
   plane.material.uniforms.texture.value=simulator.wave;
+  mapmaterial.uniforms.light.value=new THREE.Vector3(pos.x,pos.y,0)
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
@@ -342,6 +349,38 @@ function hitTest(tri,p,r){
   var pr=Math.sqrt(pos.x*pos.x+pos.y*pos.y);
   return {x: pos.x/pr, y: pos.y/pr}
 }
+
+mapShader = function(){
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      light: {type: "v3"},
+    },
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
+  });
+  /*VERT
+  varying vec3 gpos, norm;
+  void main(){
+    gpos=(modelMatrix*vec4(position,1)).xyz;
+    norm=(modelMatrix*vec4(normal,1)).xyz;
+    gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);
+  }
+  */
+  /*FRAG
+  varying vec3 gpos, norm;
+  uniform vec3 light;
+  void main(){
+    vec3 ldif=gpos-light;
+    float lr=dot(ldif,ldif);
+    float lval1=max(-dot(norm,ldif),0.0)/(1.0+lr*lr*0.05);
+    float lval2=0.5+0.5*dot(norm,vec3(1,1,1));
+    gl_FragColor.rgb=vec3(0.5,0.3,0)*lval1+lval2*vec3(0.05,0.05,0.1);
+    gl_FragColor.a=1.0;
+  }
+  */
+}
+
+
 </script>
 <style>
 div{z-index:1;position:absolute;}
@@ -384,6 +423,7 @@ canvas{position:absolute;left:0px;top:0px;}
   font-size: 20px;
   font-family: sans-serif;
 }
+body{background:black;}
 </style>
 <div id='score'>score:123</div>
 <div id='bar'  class='gold'><div id='bar_inner'></div></div>

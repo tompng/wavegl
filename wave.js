@@ -358,6 +358,7 @@ WaveSimulator.renderShader = function(size){
   void main(){
     float fx=fetch(xyposition/size+dx).z-fetch(xyposition/size-dx).z;
     float fy=fetch(xyposition/size+dy).z-fetch(xyposition/size-dy).z;
+    float fx0=fx,fy0=fy;
     fx=fx*0.1+xyposition.x*0.001;
     fy=fy*0.1+xyposition.y*0.001;
     float dxt=fx-time*0.002,dyt=fy-time*0.001;
@@ -372,9 +373,12 @@ WaveSimulator.renderShader = function(size){
     ccc=ccc*ccc;ccc=ccc*ccc;
     float geso=aaa+bbb+ccc;geso=geso*geso;
     vec3 rgb=vec3(hoge,fuga,piyo);
-    rgb=0.8*rgb*rgb*rgb*rgb*rgb*rgb+0.08*vec3(1,1,1)*geso;
+    rgb=0.2*rgb*rgb*rgb*rgb*rgb*rgb+0.08*vec3(1,1,1)*geso;
     gl_FragColor.rgb = vec3(0,0,0.1)+(rgb+dot(rgb,vec3(1,1,1))*vec3(1,1,1))/2.0;
-    //gl_FragColor.rgb=vec3((uvha.a-0.5)*10.0,1,1)*(0.5+(uvha.z-0.5)*2.0);
+    vec3 cdif=normalize(vec3(xyposition,0)-cameraPosition);
+    vec3 norm=normalize(vec3(fx0*20.,fy0*20.,1));
+    vec3 cn=cross(cdif,norm);
+    gl_FragColor.rgb = gl_FragColor.rgb*(1.-1./(1.0+3.0*dot(cn,cn)));
     gl_FragColor.a = 1.0;
   }
   */
