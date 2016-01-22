@@ -337,43 +337,69 @@ function WaterwayChunk(i,j,n,scale,scene){
 }
 
 function gondolaMesh(){
-  var xsize=1.6,ysize=1,zsize=0.5;
+  var xsize=1.8,ysize=1,zsize=0.5;
   function coords(t){
-    var cos=Math.cos(2*Math.PI*t);
-    var sin=Math.sin(2*Math.PI*t);
-    var p={x: xsize*cos/2, y: ysize*sin/2};
-    var n={x: ysize*cos/2, y: xsize*sin/2};
-    var r=Math.sqrt(p.x*p.x+p.y*p.y);
-    var nr=Math.sqrt(n.x*n.x+n.y*n.y);
-    return {x: p.x, y: p.y, r: r, nx: n.x/nr, ny: n.y/nr};
+    var x=2*t-1;
+    var y=1-x*x*x*x;
+    var z=x*x*x*x;
+    var th=0.3;
+    var tw=0.2;
+    var data=[
+      {x:x,y:0,z:z+th-y},
+      {x:x,y:Math.max(y-0.2-tw,0),z:z+th-y},
+      {x:x,y:Math.max(y-tw,0),z:z+1+y*th},
+      {x:x,y:y,z:z+1},
+      {x:x,y:Math.max(y-0.2,0),z:z-1},
+    ];
+    if(x*x>0.2){
+      data[0]=data[1]={x:x,y:0,z:z+1+y/2};
+    }else{
+      data[0].z=data[1].z=0.5;
+    }
+    for(var i=data.length-1;i!=0;i--){
+      var d=data[i];
+      data.push({x:d.x,y:-d.y,z:d.z});
+    }
+    return data.map(function(p){
+      return {
+        x: p.x*xsize/2,
+        y: p.y*ysize/2,
+        z: p.z*zsize/2
+      }
+    });
   }
-  var nth=0.2;
-  var nxy=Math.cos(nth),nz=-Math.sin(nth);
-  var nr=zsize*Math.tan(nth);
   var positions=[];
   var normals=[];
-  var N=16;
-  for(var i=0;i<N;i++){
-    var t1=i/N,t2=(i+1)/N;
-    var p1=coords(t1), p2=coords(t2);
-    positions.push(0, 0, zsize/2);
-    positions.push(p1.x, p1.y, zsize/2);
-    positions.push(p2.x, p2.y, zsize/2);
-    normals.push(0,0,1,0,0,1,0,0,1);
-    positions.push(p1.x, p1.y, zsize/2);
-    positions.push(p1.x-p1.nx*nr, p1.y-p1.ny*nr, -zsize/2);
-    positions.push(p2.x-p2.nx*nr, p2.y-p2.ny*nr, -zsize/2);
-    positions.push(p1.x, p1.y, zsize/2);
-    positions.push(p2.x-p2.nx*nr, p2.y-p2.ny*nr, -zsize/2);
-    positions.push(p2.x, p2.y, zsize/2);
-    var n1={x: p1.nx*nxy, y: p1.ny*nxy, z: nz}
-    var n2={x: p2.nx*nxy, y: p2.ny*nxy, z: nz}
-    normals.push(n1.x, n1.y, n1.z);
-    normals.push(n1.x, n1.y, n1.z);
-    normals.push(n2.x, n2.y, n2.z);
-    normals.push(n1.x, n1.y, n1.z);
-    normals.push(n2.x, n2.y, n2.z);
-    normals.push(n2.x, n2.y, n2.z);
+  var n=20;
+  for(var i=0;i<n;i++){
+    var d0=coords(i/n);
+    var d1=coords((i+1)/n);
+
+    for(var j=0;j<d0.length;j++){
+      if(j<d0.length/2){
+        triangle(d0[j],d1[(j+1)%d1.length],d0[(j+1)%d0.length]);
+        triangle(d0[j],d1[j],d1[(j+1)%d1.length]);
+      }else{
+        triangle(d0[j],d1[j],d0[(j+1)%d0.length]);
+        triangle(d0[(j+1)%d0.length],d1[j],d1[(j+1)%d1.length]);
+      }
+    }
+  }
+  function triangle(a,b,c){
+    positions.push(
+      a.x,a.y,a.z,
+      b.x,b.y,b.z,
+      c.x,c.y,c.z
+    );
+    var ab={x: b.x-a.x, y: b.y-a.y, z: b.z-a.z};
+    var ac={x: c.x-a.x, y: c.y-a.y, z: c.z-a.z};
+    var n={
+      x: ab.y*ac.z-ab.z*ac.y,
+      y: ab.z*ac.x-ab.x*ac.z,
+      z: ab.x*ac.y-ab.y*ac.x
+    };
+    var nr=Math.sqrt(n.x*n.x+n.y*n.y+n.z*n.z)||1;
+    for(var i=0;i<3;i++)normals.push(n.x/nr, n.y/nr, n.z/nr)
   }
   var varr = new Float32Array(positions);
   var narr = new Float32Array(normals);
