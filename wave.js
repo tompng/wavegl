@@ -327,7 +327,8 @@ WaveSimulator.renderShader = function(size){
     uniforms: {
       time: {type: "f"},
       size: {type: "f"},
-      texture: {type: "t"}
+      texture: {type: "t"},
+      pattern: {type: "t"}
     },
     defines: {SIZE: size.toFixed(2)},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
@@ -342,7 +343,7 @@ WaveSimulator.renderShader = function(size){
   */
   /*FRAG
   varying vec2 xyposition;
-  uniform sampler2D texture;
+  uniform sampler2D texture, pattern;
   uniform float size, time;
   const vec2 dx = vec2(1.0/SIZE, 0);
   const vec2 dy = vec2(0, 1.0/SIZE);
@@ -358,6 +359,13 @@ WaveSimulator.renderShader = function(size){
   void main(){
     float fx=fetch(xyposition/size+dx).z-fetch(xyposition/size-dx).z;
     float fy=fetch(xyposition/size+dy).z-fetch(xyposition/size-dy).z;
+    vec4 ptn=
+    +texture2D(pattern, 4.7*xyposition/size+time*vec2(0.22,0.0))
+    +texture2D(pattern, 4.3*xyposition/size+time*vec2(-0.1,0.2))
+    +texture2D(pattern, 4.1*xyposition/size+time*vec2(-0.1,-0.2))
+    -vec4(1.5,1.5,1.5,1.5);
+    fx=fx+ptn.y*0.01;
+    fy=fy+ptn.x*0.01;
     float fx0=fx,fy0=fy;
     fx=fx*0.1+xyposition.x*0.001;
     fy=fy*0.1+xyposition.y*0.001;

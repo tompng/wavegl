@@ -22,7 +22,10 @@ onload=function(){
   scene.add(chara);
   var size=10;
   scale=20;
+  wavePattern = THREE.ImageUtils.loadTexture('texture/wave.jpg');
+  wavePattern.wrapS = wavePattern.wrapT = THREE.RepeatWrapping;
   plane = new THREE.Mesh(new THREE.PlaneGeometry(waveSize, waveSize), WaveSimulator.renderShader(wavePixels));
+  plane.material.uniforms.pattern.value=wavePattern;
   scene.add(plane);
   renderer = new THREE.WebGLRenderer();
   simulator = new WaveSimulator(wavePixels, renderer);
