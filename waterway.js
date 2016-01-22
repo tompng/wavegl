@@ -349,7 +349,7 @@ function gondolaMesh(){
       {x:x,y:Math.max(y-0.2-tw,0),z:z+th-y},
       {x:x,y:Math.max(y-tw,0),z:z+1+y*th},
       {x:x,y:y,z:z+1},
-      {x:x,y:Math.max(y-0.2,0),z:z-1},
+      {x:x,y:Math.max(y-0.2,0),z:z-y},
     ];
     if(x*x>0.2){
       data[0]=data[1]={x:x,y:0,z:z+1+y/2};
