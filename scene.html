@@ -247,7 +247,7 @@ function animate(){
   camth=camth*0.8+pos.th*0.2;
   camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
   camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
-  camera.position.z=20*(Key.map[27]?32:1);
+  camera.position.z=camera.position.z*0.95+0.05*(Key.map[27]?512:20);
   camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
   camera.rotateZ(camth-Math.PI/2)
   camera.rotateX(0.2);
