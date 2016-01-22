@@ -1,0 +1,37 @@
+<script src='wave2url.js'></script>
+<script>
+var wave=[];
+for(var i=0;i<44100*2;i++)wave[i]=0;
+var samplingFrequence=44100;
+var freq0=80;
+var freq1=8000;
+var octaveN=8;
+var fr=new FreqRandom(1/100,octaveN/4);
+for(var freq=freq0;freq<freq1;freq*=Math.pow(2,1/octaveN)){
+  console.log(freq);
+  var ft=(freq-freq0)/(freq1-freq0);
+  var fr=new FreqRandom(freq/44100,10*octaveN);
+  for(var i=0;i<wave.length;i++){
+    var t=i/wave.length;
+    var v=fr.next();
+    var a=t*(1-t)/2;
+    wave[i]+=v*(ft-a)*(1-ft+a)*t*(1-t)*ft*ft
+  }
+}
+
+
+var max=0;
+for(var i=0;i<wave.length;i++){
+  var t=i/wave.length;
+  var v=t*Math.exp(-4*t)*(1-t)*(1-t);
+  wave[i]*=v;
+  max=Math.max(Math.abs(wave[i]),max);
+}
+for(var i=0;i<wave.length;i++)wave[i]/=max;
+
+var audio=new Audio();
+audio.src=wave2url(wave);
+audio.play();
+
+
+</script>
