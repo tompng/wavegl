@@ -23,9 +23,11 @@ onload=function(){
   var size=10;
   scale=20;
   wavePattern = THREE.ImageUtils.loadTexture('texture/wave.jpg');
+  sky = THREE.ImageUtils.loadTexture('texture/sky.jpg');
   wavePattern.wrapS = wavePattern.wrapT = THREE.RepeatWrapping;
   plane = new THREE.Mesh(new THREE.PlaneGeometry(waveSize, waveSize), WaveSimulator.renderShader(wavePixels));
   plane.material.uniforms.pattern.value=wavePattern;
+  plane.material.uniforms.sky.value=sky;
   scene.add(plane);
   renderer = new THREE.WebGLRenderer();
   simulator = new WaveSimulator(wavePixels, renderer);
@@ -315,7 +317,7 @@ function animate(){
   var t=performance.now()/1000;
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=t;
-  plane.material.uniforms.texture.value=simulator.wave;
+  plane.material.uniforms.wave.value=simulator.wave;
   var brightness=1+0.1*(
     Math.sin(13.7*t)+Math.sin(7.3*t)+Math.sin(10.3*t)+Math.sin(11.3*t));
   mapmaterial.uniforms.lightColor.value=new THREE.Vector3(

@@ -327,7 +327,8 @@ WaveSimulator.renderShader = function(size){
     uniforms: {
       time: {type: "f"},
       size: {type: "f"},
-      texture: {type: "t"},
+      wave: {type: "t"},
+      sky: {type: "t"},
       pattern: {type: "t"}
     },
     defines: {SIZE: size.toFixed(2)},
@@ -336,14 +337,16 @@ WaveSimulator.renderShader = function(size){
   });
   /*VERT
   varying vec2 xyposition;
+  varying vec2 pos;
   void main(){
+    pos = position.xy;
     xyposition = (modelMatrix * vec4(position,1)).xy;
     gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);
   }
   */
   /*FRAG
-  varying vec2 xyposition;
-  uniform sampler2D texture, pattern;
+  varying vec2 xyposition, pos;
+  uniform sampler2D wave, pattern, sky;
   uniform float size, time;
   const vec2 dx = vec2(1.0/SIZE, 0);
   const vec2 dy = vec2(0, 1.0/SIZE);
@@ -351,40 +354,24 @@ WaveSimulator.renderShader = function(size){
     vec2 p = SIZE*uv;
     vec2 ip = floor(p);
     vec2 d=p-ip;
-    return texture2D(texture, ip/SIZE)*(1.0-d.x)*(1.0-d.y)+
-    texture2D(texture, ip/SIZE+dx)*d.x*(1.0-d.y)+
-    texture2D(texture, ip/SIZE+dy)*(1.0-d.x)*d.y+
-    texture2D(texture, ip/SIZE+dx+dy)*d.x*d.y;
+    return texture2D(wave, ip/SIZE)*(1.0-d.x)*(1.0-d.y)+
+    texture2D(wave, ip/SIZE+dx)*d.x*(1.0-d.y)+
+    texture2D(wave, ip/SIZE+dy)*(1.0-d.x)*d.y+
+    texture2D(wave, ip/SIZE+dx+dy)*d.x*d.y;
   }
   void main(){
-    float fx=fetch(xyposition/size+dx).z-fetch(xyposition/size-dx).z;
-    float fy=fetch(xyposition/size+dy).z-fetch(xyposition/size-dy).z;
-    vec4 ptn=
-    +texture2D(pattern, 4.7*xyposition/size+time*vec2(0.22,0.0))
-    +texture2D(pattern, 4.3*xyposition/size+time*vec2(-0.1,0.2))
-    +texture2D(pattern, 4.1*xyposition/size+time*vec2(-0.1,-0.2))
-    -vec4(1.5,1.5,1.5,1.5);
-    fx=fx+ptn.y*0.01;
-    fy=fy+ptn.x*0.01;
-    float fx0=fx,fy0=fy;
-    fx=fx*0.1+xyposition.x*0.001;
-    fy=fy*0.1+xyposition.y*0.001;
-    float dxt=fx-time*0.002,dyt=fy-time*0.001;
-    float hoge=sin(200.*dxt)*sin(200.*dyt);
-    float fuga=sin(130.*dxt+120.*dyt)*sin(120.*dxt-130.*dyt);
-    float piyo=sin(60.*dxt+80.*dyt)*sin(80.*dxt-60.*dyt);
-    float aaa=sin(410.*fx+780.*fy)*sin(780.*fx-410.*fy);
-    aaa=aaa*aaa;aaa=aaa*aaa;
-    float bbb=sin(530.*fx+770.*fy)*sin(770.*fx-530.*fy);
-    bbb=bbb*bbb;bbb=bbb*bbb;
-    float ccc=sin(750.*fx+490.*fy)*sin(490.*fx-750.*fy);
-    ccc=ccc*ccc;ccc=ccc*ccc;
-    float geso=aaa+bbb+ccc;geso=geso*geso;
-    vec3 rgb=vec3(hoge,fuga,piyo);
-    rgb=0.2*rgb*rgb*rgb*rgb*rgb*rgb+0.08*vec3(1,1,1)*geso;
-    gl_FragColor.rgb = vec3(0,0,0.1)+(rgb+dot(rgb,vec3(1,1,1))*vec3(1,1,1))/2.0;
+    vec2 ripple=
+    +texture2D(pattern, 4.7*xyposition/size+time*vec2(0.22,0.0)).xy
+    +texture2D(pattern, 4.3*xyposition/size+time*vec2(-0.1,0.2)).xy
+    +texture2D(pattern, 4.1*xyposition/size+time*vec2(-0.1,-0.2)).xy
+    -vec2(1.5,1.5);
+    vec2 f=vec2(
+      fetch(xyposition/size+dx).z-fetch(xyposition/size-dx).z,
+      fetch(xyposition/size+dy).z-fetch(xyposition/size-dy).z
+    )+ripple*0.015;
+    gl_FragColor.rgb = texture2D(sky, 0.03*pos+vec2(0.5,0.5)+2.0*f).rgb;
     vec3 cdif=normalize(vec3(xyposition,0)-cameraPosition);
-    vec3 norm=normalize(vec3(fx0*20.,fy0*20.,1));
+    vec3 norm=normalize(vec3(20.0*f,1));
     vec3 cn=cross(cdif,norm);
     gl_FragColor.rgb = gl_FragColor.rgb*(1.-1./(1.0+3.0*dot(cn,cn)));
     gl_FragColor.a = 1.0;
