@@ -26,6 +26,7 @@ onload=function(){
   sky = THREE.ImageUtils.loadTexture('texture/sky.jpg');
   wavePattern.wrapS = wavePattern.wrapT = THREE.RepeatWrapping;
   plane = new THREE.Mesh(new THREE.PlaneGeometry(waveSize, waveSize), WaveSimulator.renderShader(wavePixels));
+  mapmaterial.uniforms.pattern.value=wavePattern;
   plane.material.uniforms.pattern.value=wavePattern;
   plane.material.uniforms.sky.value=sky;
   scene.add(plane);
@@ -314,17 +315,18 @@ function animate(){
     mesh.visible=mesh.wasvisible;
   });
 
-  var t=performance.now()/1000;
+  var time=performance.now()/1000;
   plane.material.uniforms.size.value=waveSize;
-  plane.material.uniforms.time.value=t;
+  plane.material.uniforms.time.value=time;
   plane.material.uniforms.wave.value=simulator.wave;
   var brightness=1+0.1*(
-    Math.sin(13.7*t)+Math.sin(7.3*t)+Math.sin(10.3*t)+Math.sin(11.3*t));
+    Math.sin(13.7*time)+Math.sin(7.3*time)+Math.sin(10.3*time)+Math.sin(11.3*time));
   mapmaterial.uniforms.lightColor.value=new THREE.Vector3(
     0.5*brightness,
     0.3*brightness,
     0
   );
+  mapmaterial.uniforms.time.value=time;
   mapmaterial.uniforms.lightPosition.value=new THREE.Vector3(pos.x+Math.cos(pos.th),pos.y+Math.sin(pos.th),1.2);
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
@@ -367,6 +369,8 @@ mapShader = function(){
   return new THREE.ShaderMaterial({
     uniforms: {
       lightPosition: {type: "v3"},
+      pattern: {type: "t"},
+      time: {type: "f"},
       lightColor: {type: "v3"}
     },
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
@@ -383,12 +387,27 @@ mapShader = function(){
   /*FRAG
   varying vec3 gpos, norm;
   uniform vec3 lightPosition, lightColor;
+  uniform sampler2D pattern;
+  uniform float time;
   void main(){
     vec3 ldif=gpos-lightPosition;
     float lr=dot(ldif,ldif);
-    float lval1=max(-dot(norm,ldif),0.0)/(1.0+lr*lr*0.05);
-    float lval2=0.5+0.5*dot(norm,vec3(1,1,1));
-    gl_FragColor.rgb=lightColor*lval1+lval2*vec3(0.05,0.05,0.1);
+    float a=0.5,b=0.7;
+    vec3 n=normalize(norm+0.2*(texture2D(pattern,a*gpos.xy+b*gpos.yz).xyz+texture2D(pattern,a*gpos.yz+b*gpos.zx).xyz+texture2D(pattern,a*gpos.zx+b*gpos.xy).xyz-1.5));
+
+    float lval1=max(-dot(n,ldif),0.0)/(1.0+lr*lr*0.05);
+    float lval2=0.5+0.5*dot(n,vec3(1,1,1));
+
+    vec3 i3=vec3(1,1,1);
+    float c=0.1,d=0.07;
+    float c1=dot(texture2D(pattern,c*gpos.xy-d*gpos.yz+vec2(+0.1,0.0)*time).rgb-0.5,i3);
+    float c2=dot(texture2D(pattern,c*gpos.yz-d*gpos.zx+vec2(-0.05,+0.1)*time).rgb-0.5,i3);
+    float c3=dot(texture2D(pattern,c*gpos.zx-d*gpos.xy+vec2(-0.05,-0.1)*time).rgb-0.5,i3);
+
+
+    float caustics = 1.0/(1.0+32.0*c1*c1)+1.0/(1.0+32.0*c2*c2)+1.0/(1.0+32.0*c3*c3);
+
+    gl_FragColor.rgb=lightColor*lval1+lval2*vec3(0.05,0.05,0.1)+caustics*lval1*vec3(0.1,0.1,0.2);
     gl_FragColor.a=1.0;
   }
   */
