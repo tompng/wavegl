@@ -382,7 +382,7 @@ function WaterwayChunk(i,j,n,scale,scene){
 }
 
 function gondolaMesh(){
-  var xsize=2.2,ysize=1.2,zsize=0.5;
+  var xsize=2.2,ysize=1,zsize=0.5;
   function coords(t){
     var x=2*t-1;
     var y=1-x*x*x*x;
