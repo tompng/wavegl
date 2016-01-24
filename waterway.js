@@ -419,7 +419,6 @@ function gondolaMesh(){
   for(var i=0;i<n;i++){
     var d0=coords(i/n);
     var d1=coords((i+1)/n);
-
     for(var j=0;j<d0.length;j++){
       if(j<d0.length/2){
         triangle(d0[j],d1[(j+1)%d1.length],d0[(j+1)%d0.length]);
@@ -430,6 +429,52 @@ function gondolaMesh(){
       }
     }
   }
+  var ferropos={x:xsize/2,y:0,z:zsize*3/4};
+  var fsize={x:zsize/3,z:zsize*2/3,y:ysize/20}
+  var ferroxz=[
+    {x:-fsize.x/2,z:-0.1*fsize.z},
+    {x:-fsize.x/2,z:+fsize.z},
+    {x:+fsize.x/2,z:+fsize.z},
+    {x:+fsize.x/2,z:+0.1*fsize.z},
+  ]
+  addxzobj(ferroxz,ferropos,fsize.y);
+  var ferrobackxz=[
+    {x:0,z:0},
+    {x:0,z:fsize.z/2},
+    {x:+fsize.x/2,z:fsize.z/2},
+    {x:+fsize.x/2,z:0},
+  ]
+  addxzobj(ferrobackxz,{x:-ferropos.x,y:0,z:ferropos.z},fsize.y);
+  addxzobj(ferrobackxz,{x:-ferropos.x*0.62,y:-ysize*0.4,z:ferropos.z},fsize.y);
+  function addxzobj(coords,pos,w){
+    for(var i=0;i<coords.length;i++){
+      var p=coords[i],q=coords[(i+1)%coords.length];
+      if(i!=0){
+        var p0=coords[0];
+        triangle(
+          {x:pos.x+p0.x,y:pos.y+w/2,z:pos.z+p0.z},
+          {x:pos.x+p.x,y:pos.y+w/2,z:pos.z+p.z},
+          {x:pos.x+q.x,y:pos.y+w/2,z:pos.z+q.z}
+        )
+        triangle(
+          {x:pos.x+p0.x,y:pos.y-w/2,z:pos.z+p0.z},
+          {x:pos.x+q.x,y:pos.y-w/2,z:pos.z+q.z},
+          {x:pos.x+p.x,y:pos.y-w/2,z:pos.z+p.z}
+        )
+      }
+      triangle(
+        {x:pos.x+p.x,y:pos.y+w/2,z:pos.z+p.z},
+        {x:pos.x+q.x,y:pos.y-w/2,z:pos.z+q.z},
+        {x:pos.x+q.x,y:pos.y+w/2,z:pos.z+q.z}
+      )
+      triangle(
+        {x:pos.x+p.x,y:pos.y+w/2,z:pos.z+p.z},
+        {x:pos.x+p.x,y:pos.y-w/2,z:pos.z+p.z},
+        {x:pos.x+q.x,y:pos.y-w/2,z:pos.z+q.z}
+      )
+    }
+  }
+
   function triangle(a,b,c){
     positions.push(
       a.x,a.y,a.z,
