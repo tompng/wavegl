@@ -42,17 +42,17 @@ onload=function(){
   renderer = new THREE.WebGLRenderer();
   simulator = new WaveSimulator(wavePixels, renderer);
   renderer.setClearColor(new THREE.Color(0xaaaaaa));
-  renderer.setSize(800,600);
+  renderer.setSize(width,height);
   var $game=document.querySelector('#game');
   $game.appendChild(renderer.domElement);
   (window.onresize=function(){
     var w=window.innerWidth;
     var h=window.innerHeight;
-    var s=Math.min(w/800,h/600);
+    var s=Math.min(w/width,h/height);
     $game.style.transform=[
       'translate('+(w/2)+'px,'+(h/2)+'px)',
       'scale('+s+','+s+')',
-      'translate(-400px,-300px)',
+      'translate(-'+(width/2)+'px,-'+(height/2)+'px)',
     ].join(' ')
   })()
   animate();
