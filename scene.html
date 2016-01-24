@@ -14,8 +14,16 @@ onload=function(){
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
   mapmaterial = mapShader();
-  wallshader1 = WaveSimulator.wallShader1();
-  wallshader2 = WaveSimulator.wallShader2();
+  wallshader1 = WaveSimulator.waveMultShader();
+  wallshader1.uniforms.value.value=new THREE.Vector4(0,0,1,1);
+  wallshader2 = WaveSimulator.waveAddShader();
+  wallshader2.uniforms.value.value=new THREE.Vector4(0.5,0.5,0,1);
+
+  itemWaveShader1 = WaveSimulator.waveMultShader();
+  itemWaveShader2 = WaveSimulator.waveAddShader();
+  itemWaveShader1.uniforms.value.value=new THREE.Vector4(1,1,0,1);
+  itemWaveShader2.uniforms.value.value=new THREE.Vector4(0,0,0.5,1);
+
   chara = gondolaMesh();
   undine = new Undine(mapmaterial);
   undine.meshes.forEach(function(m){scene.add(m)});
@@ -72,6 +80,7 @@ var numChunks=1;
 var chunks = {};
 var items = []
 function animate(){
+  var time=performance.now()/1000;
   simulator.storeLoad();
   var arr1=simulator.readStoredPixel('chara1');
   var arr2=simulator.readStoredPixel('chara2');
@@ -101,6 +110,10 @@ function animate(){
         chunk.mesh.material=mapmaterial;
         chunk.trimesh1.material=wallshader1;
         chunk.trimesh2.material=wallshader2;
+        chunk.items.forEach(function(item){
+          item.wave1.material=itemWaveShader1
+          item.wave2.material=itemWaveShader2
+        })
       }
       chunk.count=0;
     }
@@ -246,11 +259,7 @@ function animate(){
   renderer.autoClear=false;
   scene.children.forEach(function(mesh){
     mesh.wasvisible=mesh.visible;
-    if(mesh.item){
-      mesh.scalewas=mesh.scale.x;
-      mesh.scale.x=mesh.scale.y=mesh.scale.z=mesh.scalewas*0.5;
-    }
-    mesh.visible=!!mesh.wall1||!!mesh.wall2||(!!mesh.item&&mesh.visible);
+    mesh.visible=!!mesh.wall1||!!mesh.wall2;
   })
   var cornerPos={
     x:Math.round(wavePixels*(pos.x/waveSize+0.5)),
@@ -266,6 +275,8 @@ function animate(){
   wcamera.position.x=cornerPos.x*waveSize/wavePixels;
   wcamera.position.y=cornerPos.y*waveSize/wavePixels;
   renderer.render(scene, wcamera, simulator.wave);
+
+  itemWaveShader2.uniforms.value.value.z=0.5+0.1*Math.sin(4*time);
 
   renderer.setViewport(0,cpi.y,cpi.x,wavePixels-cpi.y);
   var wcamera = new THREE.OrthographicCamera(-cpi.x*waveSize/wavePixels,0,waveSize-cpi.y*waveSize/wavePixels,0,-1000,1000);
@@ -287,11 +298,9 @@ function animate(){
 
   renderer.setViewport(0,0,width,height)
   scene.children.forEach(function(mesh){
-    if(mesh.item)mesh.scale.x=mesh.scale.y=mesh.scale.z=mesh.scalewas;
     mesh.visible=mesh.wasvisible;
   });
 
-  var time=performance.now()/1000;
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=time;
   plane.material.uniforms.wave.value=simulator.wave;

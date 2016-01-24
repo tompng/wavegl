@@ -305,27 +305,38 @@ function WaterwayChunk(i,j,n,scale,scene){
   scene.add(this.trimesh1)
   scene.add(this.trimesh2);
 
+  var itemGeometry = new THREE.BoxGeometry(1, 1, 1);
+  var itemWaveGeometry = new THREE.CircleGeometry(0.25,16);
   this.items = [];
   for(var i=0;i<20;i++){
     var l=this.lines[Math.floor(this.lines.length*Math.random())];
     if(!l)continue;
-    var item = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+    var item = new THREE.Mesh(itemGeometry);
+    var wave1 = new THREE.Mesh(itemWaveGeometry);
+    var wave2 = new THREE.Mesh(itemWaveGeometry);
     var t=Math.random();
-    item.position.x=l[0].x*t+(1-t)*l[1].x;
-    item.position.y=l[0].y*t+(1-t)*l[1].y;
+    wave1.position.x=wave2.position.x=item.position.x=l[0].x*t+(1-t)*l[1].x;
+    wave1.position.y=wave2.position.y=item.position.y=l[0].y*t+(1-t)*l[1].y;
     item.rotateX(Math.random());
     item.rotateY(Math.random());
     item.rotateZ(Math.random());
     item.item=true;
+    wave1.wall1=true;wave2.wall2=true;
+    wave1.visible=wave2.visible=false;
+    item.wave1=wave1;item.wave2=wave2;
     scene.add(item);
+    scene.add(wave1,wave2);
     this.items.push(item);
   }
 
   this.dispose = function(){
     this.items.forEach(function(item){
-      item.geometry.dispose();
       scene.remove(item);
+      scene.remove(item.wave1);
+      scene.remove(item.wave2);
     })
+    itemGeometry.dispose();
+    itemWaveGeometry.dispose();
     trigeometry.dispose();
     scene.remove(this.trimesh1);
     scene.remove(this.trimesh2);
@@ -351,10 +362,15 @@ function WaterwayChunk(i,j,n,scale,scene){
         var t=item.phase*item.phase;
         var s=(1-t*t)*(1+16*t*Math.exp(-4*t));
         item.scale.x=item.scale.y=item.scale.z=s;
-        item.position.x=item.original.x*(1-t*t)+t*t*pos.x;
-        item.position.y=item.original.y*(1-t*t)+t*t*pos.y;
+        var x=item.original.x*(1-t*t)+t*t*pos.x;
+        var y=item.original.y*(1-t*t)+t*t*pos.y;
+        item.position.x=x;item.position.y=y;
+        item.wave1.position.x=item.wave2.position.x=x;
+        item.wave1.position.y=item.wave2.position.y=y;
+        item.wave1.scale.x=item.wave1.scale.y=item.wave1.scale.z=s;
+        item.wave2.scale.x=item.wave2.scale.y=item.wave2.scale.z=s;
         item.phase+=dt;
-        if(item.phase>=1)item.visible=false;
+        if(item.phase>=1)item.visible=item.wave1.visible=item.wave2.visible=false;
       }
     })
     return count;
