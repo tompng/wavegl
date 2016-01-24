@@ -291,8 +291,9 @@ WaveSimulator.waveShader = function(size){
   */
 }
 
-WaveSimulator.wallShader1 = function(){
+WaveSimulator.waveMultShader = function(){
   return new THREE.ShaderMaterial({
+    uniforms: {value: {type: 'v4'}},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
@@ -303,22 +304,25 @@ WaveSimulator.wallShader1 = function(){
   void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}
   */
   /*FRAG
-  void main(){gl_FragColor=vec4(0,0,1,1);}
+  uniform vec4 value;
+  void main(){gl_FragColor=value;}
   */
 }
-WaveSimulator.wallShader2 = function(){
+WaveSimulator.waveAddShader = function(){
   return new THREE.ShaderMaterial({
+    uniforms: {value: {type: 'v4'}},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
     depthTest: false,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.AdditiveBlending
   });
   /*VERT
   void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}
   */
   /*FRAG
-  void main(){gl_FragColor=vec4(0.5,0.5,0,1);}
+  uniform vec4 value;
+  void main(){gl_FragColor=value;}
   */
 }
 

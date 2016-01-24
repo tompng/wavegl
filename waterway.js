@@ -1,4 +1,9 @@
-function genWaterWay(rectX,rectY,rectW,rectH){
+var Waterway={};
+Waterway.randfunc = function(x,y){
+  var rnd=Math.sin(1234567*x)+Math.sin(987654*y);
+  return (54321+12345*rnd)%1;
+}
+Waterway.genWaterWay=function(rectX,rectY,rectW,rectH){
   if(!rectW){rectW=rectH=rectX;rectX=rectY=0;}
   var arr=[];
   var offset=2;
@@ -7,8 +12,8 @@ function genWaterWay(rectX,rectY,rectW,rectH){
     for(var j=0;j<rectH+2*offset;j++){
       var ix=rectX+i-offset,iy=rectY+j-offset;
       arr[i][j]={
-        x:ix+0.2+0.6*randfunc(ix+0.5,iy),
-        y:iy+0.2+0.6*randfunc(ix,iy+0.5),
+        x:ix+0.2+0.6*Waterway.randfunc(ix+0.5,iy),
+        y:iy+0.2+0.6*Waterway.randfunc(ix,iy+0.5),
         tris: [],
         points: []
       }
@@ -22,12 +27,8 @@ function genWaterWay(rectX,rectY,rectW,rectH){
   var allTriangles=[];
   var allLines=[];
   var allPoints=[];
-  function randfunc(x,y){
-    var rnd=Math.sin(1234567*x)+Math.sin(987654*y);
-    return (54321+12345*rnd)%1;
-  }
   function lineRandom(line){
-    return randfunc(line[0].x+line[1].x,line[0].y+line[1].y)<0.5;
+    return Waterway.randfunc(line[0].x+line[1].x,line[0].y+line[1].y)<0.5;
   }
 
   for(var i=0;i<rectW+2*offset-1;i++){
@@ -111,7 +112,7 @@ function genWaterWay(rectX,rectY,rectW,rectH){
       var rb=Math.sqrt(db.x*db.x+db.y*db.y);
       var cos=(da.x*db.x+da.y*db.y)/ra/rb;
       var sin=Math.sqrt(1-cos*cos);
-      var len=0.1+0.1*randfunc(a.x,b.y);
+      var len=0.1+0.1*Waterway.randfunc(a.x,b.y);
       var d={
         x:-len*(da.x/ra+db.x/rb)/sin,
         y:-len*(da.y/ra+db.y/rb)/sin
@@ -146,25 +147,49 @@ function genWaterWay(rectX,rectY,rectW,rectH){
     var y=(t[0].y+t[1].y+t[2].y)/3;
     var area=(t[1].x-t[0].x)*(t[2].y-t[0].y)-(t[1].y-t[0].y)*(t[2].x-t[0].x);
     if(area<0.05&&t.moves&&t.moves[0]&&t.moves[1]&&t.moves[2])return;
-    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH&&!ocean(x,y))triangles.push(t);
+    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH&&!Waterway.ocean(x,y))triangles.push(t);
   })
   var lines = [];
   allLines.forEach(function(l){
     var x=(l[0].x+l[1].x)/2,y=(l[0].y+l[1].y)/2;
-    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH&&lineRandom(l)&&!ocean(x,y))lines.push(l);
+    if(rectX<=x&&x<rectX+rectW&&rectY<=y&&y<rectY+rectH&&lineRandom(l)&&!Waterway.ocean(x,y))lines.push(l);
   });
-  function ocean(x,y){
-    x*=0.1;
-    y*=0.1;
-    var a=Math.cos(Math.sin(1.12*x+1.27*y)+Math.cos(1.37*x-1.19*y)+x);
-    var b=Math.cos(Math.sin(2.23*x+1.31*y)+Math.cos(2.31*y-1.13*x)+y);
-    return (a+b)*(a+b)<0.25;
-  }
   return {
     triangles: triangles,
-    lines: lines,
-    random: randfunc
+    lines: lines
   }
+}
+Waterway.ocean=function(x,y){
+  var h=Waterway.hotspot(x,y);
+  var hx=h.x-x,hy=h.y-y;
+  if(hx*hx+hy*hy<h.r*h.r)return true;
+  var a=Math.cos(Math.sin(0.112*x+0.127*y)+Math.cos(0.137*x-0.119*y)+0.1*x);
+  var b=Math.cos(Math.sin(0.223*x+0.131*y)+Math.cos(0.231*y-0.113*x)+0.1*y);
+  return (a+b)*(a+b)<0.25;
+}
+Waterway.hotspotScale=20;
+Waterway.hotspot=function(x,y){
+  var scale=Waterway.hotspotScale;
+  var ix=Math.floor(x/scale),iy=Math.floor(y/scale);
+  return {
+    x0: scale*ix,
+    y0: scale*iy,
+    scale: scale,
+    x:scale*(ix+0.2+0.6*Waterway.randfunc(ix,iy+0.5)),
+    y:scale*(iy+0.2+0.6*Waterway.randfunc(ix+0.5,iy)),
+    r: 0.2*scale*0.5
+  };
+}
+Waterway.nearestHotspot=function(x,y){
+  var scale=Waterway.hotspotScale;
+  var ix=Math.floor(x/scale),iy=Math.floor(y/scale);
+  var hmin=null,hdist2=0;
+  for(var jx=-1;jx<=1;jx++)for(var jy=-1;jy<=1;jy++){
+    var h=Waterway.hotspot(scale*(ix+jx+0.5),scale*(iy+jy+0.5))
+    var r2=(h.x-x)*(h.x-x)+(h.y-y)*(h.y-y);
+    if(!hmin||r2<hdist2){hmin=h;hdist2=r2;}
+  }
+  return hmin;
 }
 
 function WaterwayChunk(i,j,n,scale,scene){
@@ -172,7 +197,7 @@ function WaterwayChunk(i,j,n,scale,scene){
   this.j=j;
   this.n=n;
   this.scale=scale;
-  var ways = genWaterWay(i*n,j*n,n,n);
+  var ways = Waterway.genWaterWay(i*n,j*n,n,n);
   var positions = [];
   var normals = [];
   var triangles = [];
@@ -183,7 +208,7 @@ function WaterwayChunk(i,j,n,scale,scene){
   });
   triangles.forEach(function(triangle){
     addPrismMesh(triangle.map(function(p){
-      return {x:p.x,y:p.y,z:1+ways.random(p.x,p.y)};
+      return {x:p.x,y:p.y,z:1+Waterway.randfunc(p.x,p.y)};
     }));
     for(var i=0;i<3;i++){
       var a=triangle[i],b=triangle[(i+1)%3];
@@ -280,27 +305,38 @@ function WaterwayChunk(i,j,n,scale,scene){
   scene.add(this.trimesh1)
   scene.add(this.trimesh2);
 
+  var itemGeometry = new THREE.BoxGeometry(1, 1, 1);
+  var itemWaveGeometry = new THREE.CircleGeometry(0.25,16);
   this.items = [];
   for(var i=0;i<20;i++){
     var l=this.lines[Math.floor(this.lines.length*Math.random())];
     if(!l)continue;
-    var item = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+    var item = new THREE.Mesh(itemGeometry);
+    var wave1 = new THREE.Mesh(itemWaveGeometry);
+    var wave2 = new THREE.Mesh(itemWaveGeometry);
     var t=Math.random();
-    item.position.x=l[0].x*t+(1-t)*l[1].x;
-    item.position.y=l[0].y*t+(1-t)*l[1].y;
+    wave1.position.x=wave2.position.x=item.position.x=l[0].x*t+(1-t)*l[1].x;
+    wave1.position.y=wave2.position.y=item.position.y=l[0].y*t+(1-t)*l[1].y;
     item.rotateX(Math.random());
     item.rotateY(Math.random());
     item.rotateZ(Math.random());
     item.item=true;
+    wave1.wall1=true;wave2.wall2=true;
+    wave1.visible=wave2.visible=false;
+    item.wave1=wave1;item.wave2=wave2;
     scene.add(item);
+    scene.add(wave1,wave2);
     this.items.push(item);
   }
 
   this.dispose = function(){
     this.items.forEach(function(item){
-      item.geometry.dispose();
       scene.remove(item);
+      scene.remove(item.wave1);
+      scene.remove(item.wave2);
     })
+    itemGeometry.dispose();
+    itemWaveGeometry.dispose();
     trigeometry.dispose();
     scene.remove(this.trimesh1);
     scene.remove(this.trimesh2);
@@ -310,6 +346,7 @@ function WaterwayChunk(i,j,n,scale,scene){
   this.update = function(pos){
     var count = 0;
     this.items.forEach(function(item){
+      if(item.dead)return;
       item.rotateX(0.01);
       item.rotateY(0.01);
       item.rotateZ(0.01);
@@ -326,10 +363,18 @@ function WaterwayChunk(i,j,n,scale,scene){
         var t=item.phase*item.phase;
         var s=(1-t*t)*(1+16*t*Math.exp(-4*t));
         item.scale.x=item.scale.y=item.scale.z=s;
-        item.position.x=item.original.x*(1-t*t)+t*t*pos.x;
-        item.position.y=item.original.y*(1-t*t)+t*t*pos.y;
+        var x=item.original.x*(1-t*t)+t*t*pos.x;
+        var y=item.original.y*(1-t*t)+t*t*pos.y;
+        item.position.x=x;item.position.y=y;
+        item.wave1.position.x=item.wave2.position.x=x;
+        item.wave1.position.y=item.wave2.position.y=y;
+        item.wave1.scale.x=item.wave1.scale.y=item.wave1.scale.z=s;
+        item.wave2.scale.x=item.wave2.scale.y=item.wave2.scale.z=s;
         item.phase+=dt;
-        if(item.phase>=1)item.visible=false;
+        if(item.phase>=1){
+          item.visible=item.wave1.visible=item.wave2.visible=false;
+          item.dead=item.wave1.dead=item.wave2.dead=true;
+        }
       }
     })
     return count;
@@ -337,7 +382,7 @@ function WaterwayChunk(i,j,n,scale,scene){
 }
 
 function gondolaMesh(){
-  var xsize=1.8,ysize=1,zsize=0.5;
+  var xsize=2.2,ysize=1.2,zsize=0.5;
   function coords(t){
     var x=2*t-1;
     var y=1-x*x*x*x;

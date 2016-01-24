@@ -1,10 +1,13 @@
 <script src="three.min.js"></script>
 <script src="waterway.js"></script>
 <script src="wave.js"></script>
+<script src="sound/wave2url.js"></script>
 <script>
 var width=800,height=600;
 var waveSize=32;
 var wavePixels=256;
+var scale=20;
+piano=new Piano();
 onload=function(){
   camera = new THREE.Camera();
   camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
@@ -13,15 +16,21 @@ onload=function(){
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
   mapmaterial = mapShader();
-  wallshader1 = WaveSimulator.wallShader1();
-  wallshader2 = WaveSimulator.wallShader2();
+  wallshader1 = WaveSimulator.waveMultShader();
+  wallshader1.uniforms.value.value=new THREE.Vector4(0,0,1,1);
+  wallshader2 = WaveSimulator.waveAddShader();
+  wallshader2.uniforms.value.value=new THREE.Vector4(0.5,0.5,0,1);
+
+  itemWaveShader1 = WaveSimulator.waveMultShader();
+  itemWaveShader2 = WaveSimulator.waveAddShader();
+  itemWaveShader1.uniforms.value.value=new THREE.Vector4(1,1,0,1);
+  itemWaveShader2.uniforms.value.value=new THREE.Vector4(0,0,0.5,1);
+
   chara = gondolaMesh();
   undine = new Undine(mapmaterial);
   undine.meshes.forEach(function(m){scene.add(m)});
   chara.material = mapmaterial;
   scene.add(chara);
-  var size=10;
-  scale=20;
   wavePattern = THREE.ImageUtils.loadTexture('texture/wave.jpg');
   sky = THREE.ImageUtils.loadTexture('texture/sky.jpg');
   wavePattern.wrapS = wavePattern.wrapT = THREE.RepeatWrapping;
@@ -56,18 +65,16 @@ document.onkeyup=function(e){
   Key.map[e.keyCode]=false;
 }
 var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
-  {x:0,y:-0.5,r:0.35},
-  {x:0,y:-0.25,r:0.45},
-  {x:0,y:-0.05,r:0.5},
-  {x:0,y:0.05,r:0.5},
-  {x:0,y:+0.25,r:0.45},
-  {x:0,y:+0.5,r:0.35},
+  {x:0,y:-0.6,r:0.4},
+  {x:0,y:-0.3,r:0.5},
+  {x:0,y:-0.05,r:0.55},
+  {x:0,y:0.05,r:0.55},
+  {x:0,y:+0.3,r:0.5},
+  {x:0,y:+0.6,r:0.4},
 ],
   roll: {th: 0, dth: 0}
 }
 var camth=pos.th;
-var score=0;
-var barvalue=100;
 var damage=0;
 var state='start'
 var chunkSize=4
@@ -75,6 +82,7 @@ var numChunks=1;
 var chunks = {};
 var items = []
 function animate(){
+  var time=performance.now()/1000;
   simulator.storeLoad();
   var arr1=simulator.readStoredPixel('chara1');
   var arr2=simulator.readStoredPixel('chara2');
@@ -104,6 +112,10 @@ function animate(){
         chunk.mesh.material=mapmaterial;
         chunk.trimesh1.material=wallshader1;
         chunk.trimesh2.material=wallshader2;
+        chunk.items.forEach(function(item){
+          item.wave1.material=itemWaveShader1
+          item.wave2.material=itemWaveShader2
+        })
       }
       chunk.count=0;
     }
@@ -117,40 +129,14 @@ function animate(){
     scene.remove(chunk.mesh);
   }
 
-
-  var $message=document.querySelector('#message')
-  if(state=='start'){
-    $message.style.display='block';
-    if(Key.map[32])state='game';
-    $message.innerHTML='press space<br>move: arrows<br>zoomout: esc';
-  }
-  if(state=='gameover'){
-    $message.style.display='block';
-    $message.innerHTML='game over<br>press space';
-    if(Key.map[32]){
-      score=0;barvalue=100;
-      state='game';
+  for(var key in chunks){
+    var count = chunks[key].update(pos);
+    if(count){
+      var k=[0,4,7,12,16][Math.floor(5*Math.random())]
+      piano.play(k,0.1);
+      setTimeout(function(){piano.play(k+4,0.1)},100);
+      setTimeout(function(){piano.play(k+7,0.1)},200);
     }
-  }
-  if(state=='game'){
-    $message.style.display='none';
-    barvalue-=0.05;
-    for(var key in chunks){
-      var count = chunks[key].update(pos);
-      for(var i=0;i<count;i++){
-        if(barvalue>100){
-          score+=count*200;
-        }else{
-          score+=Math.round(count*(10+0.9*barvalue))
-        }
-        barvalue += 5;
-        if(barvalue>140)barvalue=140;
-      }
-    }
-    if(barvalue<0){barvalue=0;state='gameover';}
-    document.querySelector('#bar_inner').style.width=barvalue+'%';
-    document.querySelector('#bar').className = barvalue>100?'gold':'';
-    document.querySelector('#score').innerHTML = 'score: '+ score;
   }
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
@@ -257,17 +243,18 @@ function animate(){
   pos.roll.th+=pos.roll.dth*0.1;
   pos.roll.dth-=pos.roll.th*0.1;
 
-  undine.update({x:pos.x,y:pos.y,z:1}, pos.th, pos.roll.th, 0.3, -0.5);
+  undine.update({x:pos.x,y:pos.y,z:1}, pos.th, pos.roll.th, 0.3, -0.8);
 
   chara.rotateX(pos.roll.th);
   pos.rot*=0.8;
   camth=camth*0.8+pos.th*0.2;
-  camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
-  camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
+  var back=5;
+  camera.position.x=camera.position.x*0.8+0.2*(pos.x-back*Math.cos(pos.th))
+  camera.position.y=camera.position.y*0.8+0.2*(pos.y-back*Math.sin(pos.th))
   camera.position.z=camera.position.z*0.95+0.05*(Key.map[27]?512:20);
   camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
   camera.rotateZ(camth-Math.PI/2)
-  camera.rotateX(0.2);
+  camera.rotateX(0.3);
   plane.position.x=pos.x;
   plane.position.y=pos.y;
   simulator.disturb({
@@ -281,11 +268,7 @@ function animate(){
   renderer.autoClear=false;
   scene.children.forEach(function(mesh){
     mesh.wasvisible=mesh.visible;
-    if(mesh.item){
-      mesh.scalewas=mesh.scale.x;
-      mesh.scale.x=mesh.scale.y=mesh.scale.z=mesh.scalewas*0.5;
-    }
-    mesh.visible=!!mesh.wall1||!!mesh.wall2||(!!mesh.item&&mesh.visible);
+    mesh.visible=(!mesh.dead)&&(!!mesh.wall1||!!mesh.wall2);
   })
   var cornerPos={
     x:Math.round(wavePixels*(pos.x/waveSize+0.5)),
@@ -301,6 +284,8 @@ function animate(){
   wcamera.position.x=cornerPos.x*waveSize/wavePixels;
   wcamera.position.y=cornerPos.y*waveSize/wavePixels;
   renderer.render(scene, wcamera, simulator.wave);
+
+  itemWaveShader2.uniforms.value.value.z=0.5+0.1*Math.sin(4*time);
 
   renderer.setViewport(0,cpi.y,cpi.x,wavePixels-cpi.y);
   var wcamera = new THREE.OrthographicCamera(-cpi.x*waveSize/wavePixels,0,waveSize-cpi.y*waveSize/wavePixels,0,-1000,1000);
@@ -322,11 +307,9 @@ function animate(){
 
   renderer.setViewport(0,0,width,height)
   scene.children.forEach(function(mesh){
-    if(mesh.item)mesh.scale.x=mesh.scale.y=mesh.scale.z=mesh.scalewas;
     mesh.visible=mesh.wasvisible;
   });
 
-  var time=performance.now()/1000;
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=time;
   plane.material.uniforms.wave.value=simulator.wave;
@@ -413,7 +396,6 @@ mapShader = function(){
     float c2=dot(texture2D(pattern,a*gpos.yz-b*gpos.zx+vec2(-0.05,+0.1)*time).rgb-0.5,i3);
     float c3=dot(texture2D(pattern,a*gpos.zx-b*gpos.xy+vec2(-0.05,-0.1)*time).rgb-0.5,i3);
 
-
     float caustics = 1.0/(1.0+32.0*c1*c1)+1.0/(1.0+32.0*c2*c2)+1.0/(1.0+32.0*c3*c3);
 
     gl_FragColor.rgb=lightColor*lval1+lval2*vec3(0.05,0.05,0.1)+caustics*lval1*vec3(0.1,0.1,0.2);
@@ -425,51 +407,8 @@ mapShader = function(){
 
 </script>
 <style>
-div{z-index:1;position:absolute;}
 canvas{position:absolute;left:0px;top:0px;}
-#score{
-  left: 10px;
-  top: 20px;
-  color: white;
-  font-weight: bold;
-  text-shadow: 0 0 2px gray;
-  font-size: 18px;
-  font-family: sans-serif;
-}
-#bar{
-  left: 20px;
-  top: 5px;
-  width: 760px;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(0,0,0,0.4);
-  overflow: hidden;
-}
-#bar_inner{
-  width:50%;
-  height:100%;
-  background: white;
-  opacity: 0.8;
-}
-#bar.gold{opacity: 1;box-shadow: 0 0 8px yellow;}
-#bar.gold #bar_inner{opacity: 1;width: 100%;}
-#message{
-  width: 300px;
-  height:200px;
-  left:200px;
-  top:150px;
-  padding: 50px;
-  border-radius: 20px;
-  background:white;
-  opacity: 0.8;
-  font-size: 20px;
-  font-family: sans-serif;
-}
 #game{position:fixed;}
 body{background:black;overflow:hidden;}
 </style>
-<div id='game'>
-<div id='score'>score:123</div>
-<div id='bar'  class='gold'><div id='bar_inner'></div></div>
-<div id='message'></div>
-</div>
+<div id='game'></div>

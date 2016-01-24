@@ -62,3 +62,40 @@ FreqRandom.prototype.next=function(){
   this.i1=i1;this.i2=i2;this.i3=i3;
   return this.scale*(this.r1+this.r3-2*this.r2);
 }
+
+function Piano(time, uptime, strength){
+  if(!time)time=2;
+  if(!strength)strength=160;
+  if(!uptime)uptime=0.1;
+  var length=Math.round(44100*time);
+  var num=4;
+  var sounds=[];
+  for(var k=0;k<=24;k++){
+    var wave=[];
+    var fr=new FreqRandom(Math.pow(2,k/12)/100,strength);
+    var max=0;
+    for(var i=0;i<length;i++){
+      var t=i/44100/uptime;
+      var v=(t<1?t*t*(3-2*t):1)*Math.exp(-12*i/length);
+      wave[i]=v*fr.next();
+      max=Math.max(max,Math.abs(wave[i]));
+    }
+    for(var i=0;i<length;i++)wave[i]/=max;
+    if(k==0)window.wavewave=wave;
+    var url=wave2url(wave);
+    sounds[k]=[];
+    for(var i=0;i<num;i++){
+      var audio=new Audio();
+      audio.src=url;
+      sounds[k].push(audio);
+    }
+  }
+  this.sounds=sounds;
+  this.play=function(k,vol){
+    if(!vol)vol=1;
+    var audio=sounds[k].shift();
+    sounds[k].push(audio);
+    audio.volume=vol;
+    audio.play();
+  }
+}
