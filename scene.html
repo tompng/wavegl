@@ -1,11 +1,13 @@
 <script src="three.min.js"></script>
 <script src="waterway.js"></script>
 <script src="wave.js"></script>
+<script src="sound/wave2url.js"></script>
 <script>
 var width=800,height=600;
 var waveSize=32;
 var wavePixels=256;
 var scale=20;
+piano=new Piano();
 onload=function(){
   camera = new THREE.Camera();
   camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
@@ -63,12 +65,12 @@ document.onkeyup=function(e){
   Key.map[e.keyCode]=false;
 }
 var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
-  {x:0,y:-0.5,r:0.35},
-  {x:0,y:-0.25,r:0.45},
-  {x:0,y:-0.05,r:0.5},
-  {x:0,y:0.05,r:0.5},
-  {x:0,y:+0.25,r:0.45},
-  {x:0,y:+0.5,r:0.35},
+  {x:0,y:-0.6,r:0.4},
+  {x:0,y:-0.3,r:0.5},
+  {x:0,y:-0.05,r:0.55},
+  {x:0,y:0.05,r:0.55},
+  {x:0,y:+0.3,r:0.5},
+  {x:0,y:+0.6,r:0.4},
 ],
   roll: {th: 0, dth: 0}
 }
@@ -129,6 +131,12 @@ function animate(){
 
   for(var key in chunks){
     var count = chunks[key].update(pos);
+    if(count){
+      var k=[0,4,7,12,16][Math.floor(5*Math.random())]
+      piano.play(k,0.1);
+      setTimeout(function(){piano.play(k+4,0.1)},100);
+      setTimeout(function(){piano.play(k+7,0.1)},200);
+    }
   }
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
@@ -235,17 +243,18 @@ function animate(){
   pos.roll.th+=pos.roll.dth*0.1;
   pos.roll.dth-=pos.roll.th*0.1;
 
-  undine.update({x:pos.x,y:pos.y,z:1}, pos.th, pos.roll.th, 0.3, -0.5);
+  undine.update({x:pos.x,y:pos.y,z:1}, pos.th, pos.roll.th, 0.3, -0.8);
 
   chara.rotateX(pos.roll.th);
   pos.rot*=0.8;
   camth=camth*0.8+pos.th*0.2;
-  camera.position.x=camera.position.x*0.8+0.2*(pos.x-1*Math.cos(pos.th))
-  camera.position.y=camera.position.y*0.8+0.2*(pos.y-1*Math.sin(pos.th))
+  var back=5;
+  camera.position.x=camera.position.x*0.8+0.2*(pos.x-back*Math.cos(pos.th))
+  camera.position.y=camera.position.y*0.8+0.2*(pos.y-back*Math.sin(pos.th))
   camera.position.z=camera.position.z*0.95+0.05*(Key.map[27]?512:20);
   camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
   camera.rotateZ(camth-Math.PI/2)
-  camera.rotateX(0.2);
+  camera.rotateX(0.3);
   plane.position.x=pos.x;
   plane.position.y=pos.y;
   simulator.disturb({
