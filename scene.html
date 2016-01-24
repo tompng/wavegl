@@ -5,6 +5,7 @@
 var width=800,height=600;
 var waveSize=32;
 var wavePixels=256;
+var scale=20;
 onload=function(){
   camera = new THREE.Camera();
   camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
@@ -20,8 +21,6 @@ onload=function(){
   undine.meshes.forEach(function(m){scene.add(m)});
   chara.material = mapmaterial;
   scene.add(chara);
-  var size=10;
-  scale=20;
   wavePattern = THREE.ImageUtils.loadTexture('texture/wave.jpg');
   sky = THREE.ImageUtils.loadTexture('texture/sky.jpg');
   wavePattern.wrapS = wavePattern.wrapT = THREE.RepeatWrapping;

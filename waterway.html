@@ -6,14 +6,14 @@ canvas.width=canvas.height=1024;
 var g=canvas.getContext('2d');
 document.body.innerHTML='';
 document.body.appendChild(canvas);
-var size=20;
+var size=60;
 g.translate(512,512);
 g.scale(1024/size,1024/size);
 g.translate(-size/2,-size/2);
 g.lineWidth=0.01;g.lineCap='round'
 for(var i=0;i<2;i++)for(var j=0;j<2;j++){
   g.globalAlpha=0.4+0.2*Math.random();
-  var out=genWaterWay(size/2*i,size/2*j,size/2,size/2);
+  var out=Waterway.genWaterWay(size/2*i,size/2*j,size/2,size/2);
   render(out)
 }
 function render(out){
