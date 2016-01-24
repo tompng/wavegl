@@ -66,8 +66,6 @@ var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
   roll: {th: 0, dth: 0}
 }
 var camth=pos.th;
-var score=0;
-var barvalue=100;
 var damage=0;
 var state='start'
 var chunkSize=4
@@ -117,40 +115,8 @@ function animate(){
     scene.remove(chunk.mesh);
   }
 
-
-  var $message=document.querySelector('#message')
-  if(state=='start'){
-    $message.style.display='block';
-    if(Key.map[32])state='game';
-    $message.innerHTML='press space<br>move: arrows<br>zoomout: esc';
-  }
-  if(state=='gameover'){
-    $message.style.display='block';
-    $message.innerHTML='game over<br>press space';
-    if(Key.map[32]){
-      score=0;barvalue=100;
-      state='game';
-    }
-  }
-  if(state=='game'){
-    $message.style.display='none';
-    barvalue-=0.05;
-    for(var key in chunks){
-      var count = chunks[key].update(pos);
-      for(var i=0;i<count;i++){
-        if(barvalue>100){
-          score+=count*200;
-        }else{
-          score+=Math.round(count*(10+0.9*barvalue))
-        }
-        barvalue += 5;
-        if(barvalue>140)barvalue=140;
-      }
-    }
-    if(barvalue<0){barvalue=0;state='gameover';}
-    document.querySelector('#bar_inner').style.width=barvalue+'%';
-    document.querySelector('#bar').className = barvalue>100?'gold':'';
-    document.querySelector('#score').innerHTML = 'score: '+ score;
+  for(var key in chunks){
+    var count = chunks[key].update(pos);
   }
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
@@ -413,7 +379,6 @@ mapShader = function(){
     float c2=dot(texture2D(pattern,a*gpos.yz-b*gpos.zx+vec2(-0.05,+0.1)*time).rgb-0.5,i3);
     float c3=dot(texture2D(pattern,a*gpos.zx-b*gpos.xy+vec2(-0.05,-0.1)*time).rgb-0.5,i3);
 
-
     float caustics = 1.0/(1.0+32.0*c1*c1)+1.0/(1.0+32.0*c2*c2)+1.0/(1.0+32.0*c3*c3);
 
     gl_FragColor.rgb=lightColor*lval1+lval2*vec3(0.05,0.05,0.1)+caustics*lval1*vec3(0.1,0.1,0.2);
@@ -425,51 +390,8 @@ mapShader = function(){
 
 </script>
 <style>
-div{z-index:1;position:absolute;}
 canvas{position:absolute;left:0px;top:0px;}
-#score{
-  left: 10px;
-  top: 20px;
-  color: white;
-  font-weight: bold;
-  text-shadow: 0 0 2px gray;
-  font-size: 18px;
-  font-family: sans-serif;
-}
-#bar{
-  left: 20px;
-  top: 5px;
-  width: 760px;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(0,0,0,0.4);
-  overflow: hidden;
-}
-#bar_inner{
-  width:50%;
-  height:100%;
-  background: white;
-  opacity: 0.8;
-}
-#bar.gold{opacity: 1;box-shadow: 0 0 8px yellow;}
-#bar.gold #bar_inner{opacity: 1;width: 100%;}
-#message{
-  width: 300px;
-  height:200px;
-  left:200px;
-  top:150px;
-  padding: 50px;
-  border-radius: 20px;
-  background:white;
-  opacity: 0.8;
-  font-size: 20px;
-  font-family: sans-serif;
-}
 #game{position:fixed;}
 body{background:black;overflow:hidden;}
 </style>
-<div id='game'>
-<div id='score'>score:123</div>
-<div id='bar'  class='gold'><div id='bar_inner'></div></div>
-<div id='message'></div>
-</div>
+<div id='game'></div>
