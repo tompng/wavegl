@@ -346,6 +346,7 @@ function WaterwayChunk(i,j,n,scale,scene){
   this.update = function(pos){
     var count = 0;
     this.items.forEach(function(item){
+      if(item.dead)return;
       item.rotateX(0.01);
       item.rotateY(0.01);
       item.rotateZ(0.01);
@@ -370,7 +371,10 @@ function WaterwayChunk(i,j,n,scale,scene){
         item.wave1.scale.x=item.wave1.scale.y=item.wave1.scale.z=s;
         item.wave2.scale.x=item.wave2.scale.y=item.wave2.scale.z=s;
         item.phase+=dt;
-        if(item.phase>=1)item.visible=item.wave1.visible=item.wave2.visible=false;
+        if(item.phase>=1){
+          item.visible=item.wave1.visible=item.wave2.visible=false;
+          item.dead=item.wave1.dead=item.wave2.dead=true;
+        }
       }
     })
     return count;

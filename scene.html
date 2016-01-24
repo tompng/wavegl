@@ -259,7 +259,7 @@ function animate(){
   renderer.autoClear=false;
   scene.children.forEach(function(mesh){
     mesh.wasvisible=mesh.visible;
-    mesh.visible=!!mesh.wall1||!!mesh.wall2;
+    mesh.visible=(!mesh.dead)&&(!!mesh.wall1||!!mesh.wall2);
   })
   var cornerPos={
     x:Math.round(wavePixels*(pos.x/waveSize+0.5)),

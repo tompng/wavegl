@@ -315,7 +315,7 @@ WaveSimulator.waveAddShader = function(){
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
     depthTest: false,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.AdditiveBlending
   });
   /*VERT
   void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);}
