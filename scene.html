@@ -34,7 +34,18 @@ onload=function(){
   simulator = new WaveSimulator(wavePixels, renderer);
   renderer.setClearColor(new THREE.Color(0xaaaaaa));
   renderer.setSize(800,600);
-  document.body.appendChild(renderer.domElement);
+  var $game=document.querySelector('#game');
+  $game.appendChild(renderer.domElement);
+  (window.onresize=function(){
+    var w=window.innerWidth;
+    var h=window.innerHeight;
+    var s=Math.min(w/800,h/600);
+    $game.style.transform=[
+      'translate('+(w/2)+'px,'+(h/2)+'px)',
+      'scale('+s+','+s+')',
+      'translate(-400px,-300px)',
+    ].join(' ')
+  })()
   animate();
 }
 var Key={LEFT:37,UP:38,RIGHT:39,DOWN:40,map:{}};
@@ -454,8 +465,11 @@ canvas{position:absolute;left:0px;top:0px;}
   font-size: 20px;
   font-family: sans-serif;
 }
-body{background:black;}
+#game{position:fixed;}
+body{background:black;overflow:hidden;}
 </style>
+<div id='game'>
 <div id='score'>score:123</div>
 <div id='bar'  class='gold'><div id='bar_inner'></div></div>
 <div id='message'></div>
+</div>
