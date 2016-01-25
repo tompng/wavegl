@@ -337,7 +337,9 @@ WaveSimulator.renderShader = function(size){
     },
     defines: {SIZE: size.toFixed(2)},
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
-    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG')
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
+    transparent: true,
+    //blending: THREE.AdditiveBlending
   });
   /*VERT
   varying vec2 xyposition;
@@ -378,7 +380,7 @@ WaveSimulator.renderShader = function(size){
     vec3 norm=normalize(vec3(20.0*f,1));
     vec3 cn=cross(cdif,norm);
     gl_FragColor.rgb = gl_FragColor.rgb*(1.-1./(1.0+3.0*dot(cn,cn)));
-    gl_FragColor.a = 1.0;
+    gl_FragColor.a = 0.8;
   }
   */
 }

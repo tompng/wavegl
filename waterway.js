@@ -255,13 +255,15 @@ function WaterwayChunk(i,j,n,scale,scene){
       };
       var nr=Math.sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
       for(var j=0;j<3;j++)normals.push(n.x/nr,n.y/nr,n.z/nr);
+      var az=a.z||height;
+      var bz=b.z||height;
       positions.push(
-        a.x,a.y,0,
-        b.x,b.y,0,
-        b.x,b.y,b.z||height,
-        a.x,a.y,0,
-        b.x,b.y,b.z||height,
-        a.x,a.y,a.z||height
+        a.x,a.y,-az,
+        b.x,b.y,-bz,
+        b.x,b.y,+bz,
+        a.x,a.y,-az,
+        b.x,b.y,+bz,
+        a.x,a.y,+az
       );
       var lx=b.x-a.x,ly=b.y-a.y,lr=Math.sqrt(lx*lx+ly*ly);
       for(var j=0;j<6;j++)normals.push(ly/lr,-lx/lr,0);
@@ -474,7 +476,6 @@ function gondolaMesh(){
       )
     }
   }
-
   function triangle(a,b,c){
     positions.push(
       a.x,a.y,a.z,
