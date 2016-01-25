@@ -522,10 +522,10 @@ function Undine(material){
     arms[0].push(a0);arms[1].push(a1);
     legs[0].push(l0);legs[1].push(l1);
     oar.push(o);body.push(b);
-    a0.size=a1.size=0.2;
-    l0.size=l1.size=0.25;
-    b.size=0.4;
-    o.size=0.15;
+    a0.size=a1.size=0.15;
+    l0.size=l1.size=0.2;
+    b.size=0.3;
+    o.size=0.1;
   }
   head.size=0.6;
   hat.size=0.6;
@@ -539,7 +539,7 @@ function Undine(material){
   this.update = function(pos, th, roll, scale, xdiff){
     var t=performance.now()/1000;
     var oarval=Math.sin(t*7.5);
-    var bodyLeg={x:0.25+0.1*oarval+0.1*Math.sin(t*8),y:0.1*Math.sin(t*6.2)-Math.sin(roll),z:0.5};
+    var bodyLeg={x:0.25+0.1*oarval+0.1*Math.sin(t*8),y:0.1*Math.sin(t*6.2)-Math.sin(roll),z:0.8};
     var bodyArm={x:0.8*bodyLeg.x+0.1*oarval+0.5+0.1*Math.sin(t*5.3),y:0.8*bodyLeg.y+0.1*Math.sin(t*4.9),z:bodyLeg.z+0.5};
     var armth=Math.PI/4+0.2*Math.sin(7.9*t);
     var armdx=Math.sin(7.1*t)+oarval;
@@ -559,8 +559,8 @@ function Undine(material){
     })
     legs.forEach(function(leg){
       leg.forEach(function(l){
-        var p0={x:bodyLeg.x,y:bodyLeg.y+0.3*l.dir,z:bodyLeg.z};
-        var p1={x:l.dir*0.2,y:0.4*l.dir-Math.sin(roll),z:-l.dir*Math.sin(roll)};
+        var p0={x:bodyLeg.x,y:bodyLeg.y+0.2*l.dir,z:bodyLeg.z};
+        var p1={x:l.dir*0.2,y:0.4*l.dir-Math.sin(roll),z:-l.dir*Math.sin(-roll)};
         l.pos={x:p0.x*(1-l.t)+l.t*p1.x,y:p0.y*(1-l.t)+l.t*p1.y,z:p0.z*(1-l.t)+l.t*p1.z};
       })
     })
@@ -579,7 +579,7 @@ function Undine(material){
       var x=m.pos.x+xdiff/scale, y=0.2+m.pos.y, z=m.pos.z;
       m.position.x=pos.x+(x*cos-y*sin)*scale
       m.position.y=pos.y+(x*sin+y*cos)*scale
-      m.position.z=pos.z+z*scale;
+      m.position.z=pos.z+z*scale-0.55;
       m.scale.x=m.scale.y=m.scale.z=m.size*scale;
     })
     hat.scale.z=hat.size*0.2;
