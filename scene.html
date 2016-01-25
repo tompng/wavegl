@@ -16,6 +16,15 @@ onload=function(){
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
   mapmaterial = mapShader();
+  lanternmaterial = lanternShader();
+  lanterns=[];
+  for(var i=0;i<4;i++){
+    var r=0.25*Math.pow(1.5,i);
+    var lantern=new THREE.Mesh(new THREE.SphereGeometry(r,32,32),lanternmaterial);
+    lanterns.push(lantern);
+    lantern.renderOrder=1;
+    scene.add(lantern);
+  }
   wallshader1 = WaveSimulator.waveMultShader();
   wallshader1.uniforms.value.value=new THREE.Vector4(0,0,1,1);
   wallshader2 = WaveSimulator.waveAddShader();
@@ -324,7 +333,19 @@ function animate(){
     0
   );
   mapmaterial.uniforms.time.value=time;
-  mapmaterial.uniforms.lightPosition.value=new THREE.Vector3(pos.x+Math.cos(pos.th),pos.y+Math.sin(pos.th),1.2);
+  var ry=Math.sin(pos.roll.th);
+  var rz=Math.cos(pos.roll.th);
+  var light={
+    x: pos.x+0.8*Math.cos(pos.th)+0.75*Math.sin(pos.th)*ry,
+    y: pos.y+0.8*Math.sin(pos.th)-0.75*Math.cos(pos.th)*ry,
+    z: 0.75*rz-0.1
+  }
+  mapmaterial.uniforms.lightPosition.value=new THREE.Vector3(light.x,light.y,light.z);
+  lanterns.forEach(function(l){
+    l.position.x=light.x;
+    l.position.y=light.y;
+    l.position.z=light.z;
+  })
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
@@ -402,6 +423,34 @@ mapShader = function(){
     float caustics = 1.0/(1.0+32.0*c1*c1)+1.0/(1.0+32.0*c2*c2)+1.0/(1.0+32.0*c3*c3);
 
     gl_FragColor.rgb=lightColor*lval1+lval2*vec3(0.05,0.05,0.1)+caustics*lval1*vec3(0.1,0.1,0.2);
+    gl_FragColor.a=1.0;
+  }
+  */
+}
+
+lanternShader = function(){
+  return new THREE.ShaderMaterial({
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  /*VERT
+  varying vec3 gpos, norm;
+  void main(){
+    gpos=(modelMatrix*vec4(position,1)).xyz;
+    norm=normalize((modelMatrix*vec4(normal,0)).xyz);
+    gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);
+  }
+  */
+  /*FRAG
+  varying vec3 gpos, norm;
+  void main(){
+    vec3 lvec=gpos-cameraPosition;
+    float d=dot(normalize(lvec),normalize(norm));
+    gl_FragColor.rgb = vec3(0.2,0.15,0.1)*d*d;
     gl_FragColor.a=1.0;
   }
   */
