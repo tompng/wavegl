@@ -8,9 +8,18 @@ var waveSize=32;
 var wavePixels=256;
 var scale=20;
 piano=new Piano();
+function resizeView(){
+  width=window.innerWidth;
+  height=window.innerHeight;
+  renderer.setSize(width, height);
+  camera.aspect = width/height;
+  camera.updateProjectionMatrix();
+}
 onload=function(){
+  width=window.innerWidth;
+  height=window.innerHeight;
   camera = new THREE.Camera();
-  camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(40, width/height, 0.1, 1000);
   camera.position.z = 4;
   camera.lookAt({x:0,y:0,z:0});
   camera.initialRotation=camera.rotation.clone()
@@ -48,22 +57,18 @@ onload=function(){
   plane.material.uniforms.pattern.value=wavePattern;
   plane.material.uniforms.sky.value=sky;
   scene.add(plane);
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer({antialias:true});
   simulator = new WaveSimulator(wavePixels, renderer);
   renderer.setClearColor(new THREE.Color(0xaaaaaa));
   renderer.setSize(width,height);
-  var $game=document.querySelector('#game');
-  $game.appendChild(renderer.domElement);
-  (window.onresize=function(){
-    var w=window.innerWidth;
-    var h=window.innerHeight;
-    var s=Math.min(w/width,h/height);
-    $game.style.transform=[
-      'translate('+(w/2)+'px,'+(h/2)+'px)',
-      'scale('+s+','+s+')',
-      'translate(-'+(width/2)+'px,-'+(height/2)+'px)',
-    ].join(' ')
-  })()
+  document.body.appendChild(renderer.domElement);
+  window.onresize=function(){
+    if(resizeView.timer)clearTimeout(resizeView.timer);
+    resizeView.timer=setTimeout(function(){
+      resizeView.timer=null;
+      resizeView();
+    },1000)
+  }
   animate();
 }
 var Key={LEFT:37,UP:38,RIGHT:39,DOWN:40,map:{}};
@@ -459,8 +464,6 @@ lanternShader = function(){
 
 </script>
 <style>
-canvas{position:absolute;left:0;top:0;}
-#game{position:fixed;left:0;top:0;}
+canvas{position:fixed;left:0;top:0;}
 body{background:black;overflow:hidden;}
 </style>
-<div id='game'></div>
