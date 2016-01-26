@@ -121,9 +121,9 @@ function animate(){
   if(arr1&&arr2){
     var hx=arr1[2]-arr2[2],hy=arr3[2]-arr4[2];
     pos.roll.dth+=0.2*(Math.cos(pos.th)*hy-Math.sin(pos.th)*hx)
-    pos.vx=pos.vx*0.99-(arr1[0]+arr2[0]+arr3[0]+arr4[0]-2)*0.0002;
-    pos.vy=pos.vy*0.99-(arr1[1]+arr2[1]+arr3[1]+arr4[1]-2)*0.0002;
-    pos.rot=pos.rot*0.99+(arr1[1]-arr2[1]-arr3[0]+arr4[0])*0.001;
+    pos.vx=pos.vx*0.99-(arr1[0]+arr2[0]+arr3[0]+arr4[0]-2)*0.002;
+    pos.vy=pos.vy*0.99-(arr1[1]+arr2[1]+arr3[1]+arr4[1]-2)*0.002;
+    pos.rot=pos.rot*0.99+(arr1[1]-arr2[1]-arr3[0]+arr4[0])*0.002;
   }
   var chunkx=Math.round(pos.x/chunkSize/scale);
   var chunky=Math.round(pos.y/chunkSize/scale);
@@ -306,7 +306,7 @@ function animate(){
   charawave1.position.x=charawave2.position.x=pos.x;
   charawave1.position.y=charawave2.position.y=pos.y;
   charaWaveShader1.uniforms.value.value=new THREE.Vector4(0,0,1,1);
-  charaWaveShader2.uniforms.value.value=new THREE.Vector4(0.5-8*pos.vx,0.5-8*pos.vy,0,1);
+  charaWaveShader2.uniforms.value.value=new THREE.Vector4(0.5-4*pos.vx,0.5-4*pos.vy,0,1);
 
   itemWaveShader2.uniforms.value.value.z=0.5+0.1*Math.sin(4*time);
 
@@ -523,7 +523,7 @@ renderShader = function(size){
     )+ripple*0.005;
 
     vec3 cdif=normalize(vec3(xyposition,0)-cameraPosition);
-    vec3 norm=normalize(cdif+8.0*vec3(f,0));
+    vec3 norm=normalize(cdif+16.0*vec3(f,0));
     norm.z=-norm.z;
     gl_FragColor.rgb = texture2D(sky, vec2(0.5,0.5)+0.4*norm.xy).rgb;
     vec3 cn=cross(cdif,norm);
