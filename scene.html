@@ -3,17 +3,21 @@
 <script src="wave.js"></script>
 <script src="sound/wave2url.js"></script>
 <script>
+var aspect=4/3;
 var width=800,height=600;
 var waveSize=32;
 var wavePixels=256;
 var scale=20;
 piano=new Piano();
 function resizeView(){
-  width=window.innerWidth;
-  height=window.innerHeight;
+  var w=window.innerWidth;
+  var h=window.innerHeight;
+  if(w>aspect*h)w=aspect*h;
+  else h=w/aspect;
+  width=w;height=h;
   renderer.setSize(width, height);
-  camera.aspect = width/height;
-  camera.updateProjectionMatrix();
+  renderer.domElement.style.left=(window.innerWidth-w)/2+'px';
+  renderer.domElement.style.top=(window.innerHeight-h)/2+'px';
 }
 onload=function(){
   width=window.innerWidth;
@@ -69,6 +73,7 @@ onload=function(){
       resizeView();
     },1000)
   }
+  resizeView();
   animate();
 }
 var Key={LEFT:37,UP:38,RIGHT:39,DOWN:40,map:{}};
