@@ -109,6 +109,7 @@ function WaveSimulator(size, renderer) {
 }
 WaveSimulator.shaderCode = function(func, name){
   var code = func.toString();
+  if(!name)name='';
   var start=code.indexOf('/*'+name);
   var end=code.indexOf('*/',start);
   if(start<0||end<0)throw 'no shader '+name+' found';

@@ -2,6 +2,7 @@
 <script src="waterway.js"></script>
 <script src="wave.js"></script>
 <script src="sound/wave2url.js"></script>
+<script src="particle.js"></script>
 <script>
 var aspect=4/3;
 var width=800,height=600;
@@ -38,6 +39,11 @@ onload=function(){
     lantern.renderOrder=1;
     scene.add(lantern);
   }
+  var particleGeometry = Particle.geometry(1000);
+  particle = new THREE.PointCloud(particleGeometry, Particle.vortexShader());
+  particle.renderOrder=1;
+  scene.add(particle);
+
   wallshader1 = WaveSimulator.waveMultShader();
   wallshader1.uniforms.value.value=new THREE.Vector4(0,0,1,1);
   wallshader2 = WaveSimulator.waveAddShader();
@@ -108,6 +114,7 @@ var chunks = {};
 var escvalue=0;
 function animate(){
   var time=performance.now()/1000;
+  particle.material.uniforms.time.value = time/3%1;
   simulator.storeLoad();
   var arr1=simulator.readStoredPixel('chara1');
   var arr2=simulator.readStoredPixel('chara2');
@@ -401,7 +408,7 @@ function hitTest(tri,p,r){
   return {x: pos.x/pr, y: pos.y/pr}
 }
 
-mapShader = function(){
+function mapShader(){
   return new THREE.ShaderMaterial({
     uniforms: {
       lightPosition: {type: "v3"},
@@ -446,7 +453,7 @@ mapShader = function(){
   */
 }
 
-lanternShader = function(){
+function lanternShader(){
   return new THREE.ShaderMaterial({
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
@@ -487,7 +494,6 @@ renderShader = function(size){
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
-    //blending: THREE.AdditiveBlending
   });
   /*VERT
   varying vec2 xyposition;
