@@ -68,6 +68,11 @@ function decaySoundWave(time,uptime,freq,strength){
   var wave=[];
   var length=SAMPLING_RATE*time;
   var fr=new FreqRandom(freq/SAMPLING_RATE,strength);
+  if(strength==Infinity){
+    var a=2*Math.PI*Math.random();
+    var fri=0;
+    fr={next: function(){fri++;return Math.sin(2*Math.PI*freq*fri/SAMPLING_RATE+a)}}
+  }
   var max=0;
   for(var i=0;i<length;i++){
     var t=i/length;
