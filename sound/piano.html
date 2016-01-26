@@ -1,6 +1,9 @@
 <script src='wave2url.js'></script>
 <script>
 p=new Piano();
+os=new OceanSound();
+os.volume=0.05;
+os.start();
 var arr=[];
 var keys='1234567890-=!@#$%^&*()_+';
 var prevkey=null;
@@ -22,8 +25,6 @@ document.onkeypress=function(e){
   }
   document.querySelector('textarea').value=arr.join('');
 }
-
-
 
 </script>
 <textarea>

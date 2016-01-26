@@ -1,3 +1,4 @@
+var SAMPLING_RATE = 44100;
 function wave2url(data){
   var header=[];
   function puts(s){for(var i=0;i<s.length;i++)header.push(s.charCodeAt(i));}
@@ -8,8 +9,8 @@ function wave2url(data){
   puti(16,4);
   puti(1,2);
   puti(1,2);
-  puti(44100,4);
-  puti(44100*2,4);
+  puti(SAMPLING_RATE,4);
+  puti(SAMPLING_RATE*2,4);
   puti(2,2);
   puti(16,2);
   puts('data');
@@ -63,26 +64,46 @@ FreqRandom.prototype.next=function(){
   return this.scale*(this.r1+this.r3-2*this.r2);
 }
 
+function decaySoundWave(time,uptime,freq,strength){
+  var wave=[];
+  var length=SAMPLING_RATE*time;
+  var fr=new FreqRandom(freq/SAMPLING_RATE,strength);
+  var max=0;
+  for(var i=0;i<length;i++){
+    var t=i/length;
+    var u=i/SAMPLING_RATE/uptime;
+    var v=(u<1?u*u*(3-2*u):1)*Math.exp(-12*t);
+    wave[i]=v*fr.next();
+    max=Math.max(max,Math.abs(wave[i]));
+  }
+  for(var i=0;i<length;i++)wave[i]/=max;
+  return wave;
+}
+function smoothSoundWave(time,freq,strength){
+  var wave=[];
+  var length=SAMPLING_RATE*time;
+  var fr=new FreqRandom(freq/SAMPLING_RATE,strength);
+  var max=0;
+  for(var i=0;i<length;i++){
+    var t=i/length;
+    var v=t*t*t*(1-t)*(1-t)*(1-t);
+    wave[i]=v*fr.next();
+    max=Math.max(max,Math.abs(wave[i]));
+  }
+  for(var i=0;i<length;i++)wave[i]/=max;
+  return wave;    
+}
+
 function Piano(time, uptime, strength){
   if(!time)time=2;
   if(!strength)strength=160;
   if(!uptime)uptime=0.1;
-  var length=Math.round(44100*time);
+  var length=Math.round(SAMPLING_RATE*time);
   var num=4;
   var sounds=[];
   for(var k=0;k<=24;k++){
-    var wave=[];
-    var fr=new FreqRandom(Math.pow(2,k/12)/100,strength);
-    var max=0;
-    for(var i=0;i<length;i++){
-      var t=i/44100/uptime;
-      var v=(t<1?t*t*(3-2*t):1)*Math.exp(-12*i/length);
-      wave[i]=v*fr.next();
-      max=Math.max(max,Math.abs(wave[i]));
-    }
-    for(var i=0;i<length;i++)wave[i]/=max;
-    if(k==0)window.wavewave=wave;
-    var url=wave2url(wave);
+    var freq=441*Math.pow(2,k/12);
+    var url=wave2url(decaySoundWave(time,uptime,freq,strength));
     sounds[k]=[];
     for(var i=0;i<num;i++){
       var audio=new Audio();
@@ -97,5 +118,28 @@ function Piano(time, uptime, strength){
     sounds[k].push(audio);
     audio.volume=vol;
     audio.play();
+  }
+}
+
+function OceanSound(){
+  audios = [];
+  for(var n=0;n<10;n++){ 
+    var audio = new Audio();
+    audio.src = wave2url(smoothSoundWave(4,4410*(0.5+Math.random()),3));
+    audios.push(audio);
+  }
+  var timer = null;
+  this.start = function(){if(!timer)next();}
+  this.stop = function(){clearTimeout(timer);timer=null;}
+  var self=this;
+  this.volume=1;
+  var i=0;
+  function next(){
+    timer = null;
+    i=(i+1)%audios.length;
+    var r = gaussRandom();
+    audios[i].volume=Math.min(0.1*r*r*self.volume, 1);
+    audios[i].play();
+    timer = setTimeout(next,400+400*Math.random());
   }
 }
