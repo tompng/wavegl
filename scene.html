@@ -29,6 +29,7 @@ onload=function(){
   camera.lookAt({x:0,y:0,z:0});
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
+  particleSystem = new Particle.System(scene);
   mapmaterial = mapShader();
   lanternmaterial = lanternShader();
   lanterns=[];
@@ -39,10 +40,6 @@ onload=function(){
     lantern.renderOrder=1;
     scene.add(lantern);
   }
-  var particleGeometry = Particle.geometry(1000);
-  particle = new THREE.PointCloud(particleGeometry, Particle.vortexShader());
-  particle.renderOrder=1;
-  scene.add(particle);
 
   wallshader1 = WaveSimulator.waveMultShader();
   wallshader1.uniforms.value.value=new THREE.Vector4(0,0,1,1);
@@ -114,9 +111,6 @@ var chunks = {};
 var escvalue=0;
 function animate(){
   var time=performance.now()/1000;
-  particle.material.uniforms.time.value = time/(2*Math.PI/4)%1;
-  particle.position.x=chara.position.x;
-  particle.position.y=chara.position.y;
   simulator.storeLoad();
   var arr1=simulator.readStoredPixel('chara1');
   var arr2=simulator.readStoredPixel('chara2');
@@ -170,8 +164,11 @@ function animate(){
       piano.play(k,0.1);
       setTimeout(function(){piano.play(k+4,0.1)},100);
       setTimeout(function(){piano.play(k+7,0.1)},200);
+      particleSystem.fire(1000,chara.position,1,Particle.vortexMaterial);
     }
   }
+
+  particleSystem.update((width+height)/2);
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
   if(Key.map[Key.RIGHT])pos.rot-=0.01;
