@@ -346,7 +346,7 @@ function WaterwayChunk(i,j,n,scale,scene){
     scene.remove(this.mesh);
   }
   this.update = function(pos){
-    var count = 0;
+    var hitItems = []
     this.items.forEach(function(item){
       if(item.dead)return;
       item.rotateX(0.01);
@@ -360,7 +360,7 @@ function WaterwayChunk(i,j,n,scale,scene){
       if(!item.phase&&dr<4){
         item.original={x:item.position.x,y:item.position.y};
         item.phase=dt;
-        count++;
+        hitItems.push(item);
       }else if(item.phase!==undefined){
         var t=item.phase*item.phase;
         var s=(1-t*t)*(1+16*t*Math.exp(-4*t));
@@ -379,7 +379,7 @@ function WaterwayChunk(i,j,n,scale,scene){
         }
       }
     })
-    return count;
+    return hitItems;
   }
 }
 

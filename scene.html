@@ -158,14 +158,16 @@ function animate(){
   }
 
   for(var key in chunks){
-    var count = chunks[key].update(pos);
-    if(count){
+    var hits = chunks[key].update(pos);
+    hits.forEach(function(item){
       var k=[0,4,7,12,16][Math.floor(5*Math.random())]
       piano.play(k,0.1);
       setTimeout(function(){piano.play(k+4,0.1)},100);
       setTimeout(function(){piano.play(k+7,0.1)},200);
-      particleSystem.fire(1000,chara.position,1,Particle.vortexMaterial);
-    }
+      var materials = [
+      Particle.vortexMaterial, Particle.starMaterial, Particle.rippleMaterial];
+      particleSystem.fire(1000,item.position,1,materials[Math.floor(materials.length*Math.random())]);
+    });
   }
 
   particleSystem.update((width+height)/2);
