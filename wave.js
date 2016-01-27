@@ -107,12 +107,15 @@ function WaveSimulator(size, renderer) {
     renderer.render(scene, camera, wave1);
   }
 }
-WaveSimulator.shaderCode = function(func, name){
+WaveSimulator.shaderCode = function(func, name, ignore){
   var code = func.toString();
   if(!name)name='';
   var start=code.indexOf('/*'+name);
   var end=code.indexOf('*/',start);
-  if(start<0||end<0)throw 'no shader '+name+' found';
+  if(start<0||end<0){
+    if(ignore)return;
+    throw 'no shader '+name+' found';
+  }
   return code.substring(start+name.length+2,end);
 }
 WaveSimulator.storeShader = function(){
