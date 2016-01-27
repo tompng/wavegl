@@ -114,7 +114,9 @@ var chunks = {};
 var escvalue=0;
 function animate(){
   var time=performance.now()/1000;
-  particle.material.uniforms.time.value = time/3%1;
+  particle.material.uniforms.time.value = time/(2*Math.PI/4)%1;
+  particle.position.x=chara.position.x;
+  particle.position.y=chara.position.y;
   simulator.storeLoad();
   var arr1=simulator.readStoredPixel('chara1');
   var arr2=simulator.readStoredPixel('chara2');

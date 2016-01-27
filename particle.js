@@ -25,8 +25,7 @@ Particle.vortexShader=function(){
   return new THREE.ShaderMaterial({
     uniforms: {
       maxSize: {type: "f", value: 20},
-      time: {type: "f", value: 0.5},
-      origin: {type: "v3", value: new THREE.Vector3(0,0,0)}
+      time: {type: "f", value: 0.5}
     },
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: Particle.fragmentShader,
@@ -37,16 +36,45 @@ Particle.vortexShader=function(){
   });
   /*VERT
   uniform float maxSize, time;
-  uniform vec3 origin;
   varying vec3 color;
   void main(){
     float theta = time*16.0+0.5*position.x*min(4.0*time,1.0);
     float size=6.0*time*(1.0-time)*(1.0-time);
-    vec3 pos = origin+4.0*time*time*(3.0-2.0*time)*vec3(cos(theta),sin(theta),1.0-cos(3.0*theta)*(1.0-time)+time*sin(2.0*theta))+(0.2+time)*normal*0.4;
+    vec3 pos = 4.0*time*time*(3.0-2.0*time)*vec3(cos(theta),sin(theta),1.0-cos(3.0*theta)*(1.0-time)+time*sin(2.0*theta))+(0.2+time)*normal*0.4;
+    vec3 gpos = (modelMatrix*vec4(pos, 1)).xyz;
     gl_Position = projectionMatrix*modelViewMatrix*vec4(pos, 1);
-    float psize = 100.0*size/length(pos - cameraPosition);
+    float psize = 100.0*size/length(gpos - cameraPosition);
     gl_PointSize = clamp(psize, 1.0, maxSize);
     color = vec3(0.5,0.4,0.3)*psize/max(psize,2.0);
+  }
+  */
+}
+
+Particle.rippleShader=function(){
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      maxSize: {type: "f", value: 20},
+      time: {type: "f", value: 0.5}
+    },
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: Particle.fragmentShader,
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  /*VERT
+  uniform float maxSize, time;
+  varying vec3 color;
+  void main(){
+    float theta = 1000.0*position.x+0.02*sin(4.0*position.y*time);
+    float size=2.0;
+    vec3 pos = vec3(vec2(cos(theta),sin(theta))*(0.5+4.0*time+0.4*position.z*time+0.4*position.x*(1.0-time)), 0.1+0.05*normal.z);
+    vec3 gpos = (modelMatrix*vec4(pos, 1)).xyz;
+    gl_Position = projectionMatrix*modelViewMatrix*vec4(pos, 1);
+    float psize = 100.0*size/length(gpos - cameraPosition);
+    gl_PointSize = clamp(psize, 1.0, maxSize);
+    color = time*time*(1.0-time)*vec3(1.0,0.8,0.6)*psize/max(psize,2.0);
   }
   */
 }
