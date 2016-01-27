@@ -24,7 +24,7 @@ Particle.shaderBase=function(func, uni){
     WaveSimulator.shaderCode(func, 'DEF', true),
     'void main(){',
     WaveSimulator.shaderCode(arguments.callee, 'VAR'),
-    WaveSimulator.shaderCode(func, 'CODE'),
+    WaveSimulator.shaderCode(func, 'CODE', true) || WaveSimulator.shaderCode(func, ''),
     WaveSimulator.shaderCode(arguments.callee, 'CODE'),
     '}'
   ].join('');
@@ -65,32 +65,29 @@ Particle.shaderBase=function(func, uni){
 
 
 Particle.vortexShader=function(){
-  return Particle.shaderBase(arguments.callee);
-  /*CODE
+  return Particle.shaderBase(function(){/*
     float theta = time*16.0+0.5*position.x*min(4.0*time,1.0);
     size=6.0*time*(1.0-time)*(1.0-time);
     pos = 4.0*time*time*(3.0-2.0*time)*vec3(cos(theta),sin(theta),1.0-cos(3.0*theta)*(1.0-time)+time*sin(2.0*theta))+(0.2+time)*normal*0.4;
     color = vec3(0.5,0.4,0.3);
-  */
+  */});
 }
 
 Particle.rippleShader=function(){
-  return Particle.shaderBase(arguments.callee);
-  /*CODE
+  return Particle.shaderBase(function(){/*
     float theta = 1000.0*position.x+0.02*sin(4.0*position.y*time);
     size=2.0;
     pos = vec3(vec2(cos(theta),sin(theta))*(0.5+4.0*time+0.4*position.z*time+0.4*position.x*(1.0-time)), 0.1+0.05*normal.z);
     color = time*time*(1.0-time)*vec3(1.0,0.8,0.6);
-  */
+  */});
 }
 
 Particle.divergenceShader=function(){
-  return Particle.shaderBase(arguments.callee);
-  /*CODE
+  return Particle.shaderBase(function(){/*
     float phase = (1000.0*position.x+2.0*time);
     phase = phase - floor(phase);
     size=2.0;
     pos = 1.0*normalize(normal)*phase+vec3(0,0,1);
     color = phase*phase*(1.0-phase)*vec3(1.0,0.8,0.6);
-  */
+  */});
 }
