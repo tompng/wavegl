@@ -384,6 +384,8 @@ function animate(){
     l.position.x=light.x;
     l.position.y=light.y;
     l.position.z=light.z;
+    if(!l.originalscale)l.originalscale=l.scale.x;
+    l.scale.x=l.scale.y=l.scale.z=l.originalscale*(0.8+0.2*brightness);
   })
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
