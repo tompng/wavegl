@@ -95,7 +95,7 @@ Particle.materialBase=function(func, uni){
     }
   */
   /*DEF
-    uniform float maxSize, time;
+    uniform float maxSize, time, windowSize;
     varying vec3 color;
   */
   /*VAR
@@ -105,7 +105,7 @@ Particle.materialBase=function(func, uni){
   /*CODE
     vec3 gpos = (modelMatrix*vec4(pos, 1)).xyz;
     gl_Position = projectionMatrix*modelViewMatrix*vec4(pos, 1);
-    float psize = 100.0*size/length(gpos - cameraPosition);
+    float psize = windowSize*size/length(gpos - cameraPosition);
     gl_PointSize = clamp(psize, 1.0, maxSize);
     color = color*psize/gl_PointSize;
   */
@@ -114,14 +114,14 @@ Particle.materialBase=function(func, uni){
 
 Particle.vortexMaterial=Particle.materialBase(function(){/*
   float theta = 16.0*(2.0*time-time*time)+0.5*position.x*min(4.0*time,1.0);
-  size=2.0;
+  size = 0.5;
   pos = 2.0*time*time*(3.0-2.0*time)*vec3(cos(theta),sin(theta),6.0*time+0.5*sin(3.0*theta)*(1.0-time)-0.5*time*sin(2.0*theta))+(0.2+time)*normal*0.4;
   color = 4.0*time*(1.0-time)*(1.0-time)*vec3(0.5,0.4,0.3);
 */});
 
 Particle.rippleMaterial=Particle.materialBase(function(){/*
   float theta = 1000.0*position.x+0.02*sin(4.0*position.y*time);
-  size=2.0;
+  size = 0.5;
   pos = vec3(vec2(cos(theta),sin(theta))*(0.5+4.0*time+0.4*position.z*time+0.4*position.x*(1.0-time)), 0.5+0.05*normal.z);
   color = 2.0*time*(1.0-time)*(1.0-time)*vec3(1.0,0.8,0.6);
 */});
@@ -129,14 +129,14 @@ Particle.rippleMaterial=Particle.materialBase(function(){/*
 Particle.divergenceMaterial=Particle.materialBase(function(){/*
   float phase = (1000.0*position.x+time);
   phase = phase - floor(phase);
-  size=2.0;
+  size = 0.5;
   pos = 1.0*normalize(normal)*phase+vec3(0,0,1);
   color = phase*phase*(1.0-phase)*vec3(1.0,0.8,0.6);
 */});
 
 Particle.starMaterial=Particle.materialBase(function(){/*
   float theta = 1000.0*position.x;
-  size=2.0;
+  size = 1.0;
   pos = vec3(4.0*time*vec2(cos(theta),sin(theta))*(1.0+0.2*sin(5.0*theta)),0.5)+0.2*normal;
   color = 4.0*time*time*(1.0-time)*(1.0-time)*vec3(1.0,0.8,0.6);
 */});
