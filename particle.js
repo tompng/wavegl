@@ -113,17 +113,17 @@ Particle.materialBase=function(func, uni){
 
 
 Particle.vortexMaterial=Particle.materialBase(function(){/*
-  float theta = time*16.0+0.5*position.x*min(4.0*time,1.0);
+  float theta = 16.0*(2.0*time-time*time)+0.5*position.x*min(4.0*time,1.0);
   size=2.0;
-  pos = 4.0*time*time*(3.0-2.0*time)*vec3(cos(theta),sin(theta),1.0+0.4*sin(3.0*theta)*(1.0-time)-0.4*time*sin(2.0*theta))+(0.2+time)*normal*0.4;
-  color = 4.0*time*time*(1.0-time)*vec3(0.5,0.4,0.3);
+  pos = 2.0*time*time*(3.0-2.0*time)*vec3(cos(theta),sin(theta),6.0*time+0.5*sin(3.0*theta)*(1.0-time)-0.5*time*sin(2.0*theta))+(0.2+time)*normal*0.4;
+  color = 4.0*time*(1.0-time)*(1.0-time)*vec3(0.5,0.4,0.3);
 */});
 
 Particle.rippleMaterial=Particle.materialBase(function(){/*
   float theta = 1000.0*position.x+0.02*sin(4.0*position.y*time);
   size=2.0;
-  pos = vec3(vec2(cos(theta),sin(theta))*(0.5+4.0*time+0.4*position.z*time+0.4*position.x*(1.0-time)), 0.1+0.05*normal.z);
-  color = 4.0*time*time*(1.0-time)*(1.0-time)*vec3(1.0,0.8,0.6);
+  pos = vec3(vec2(cos(theta),sin(theta))*(0.5+4.0*time+0.4*position.z*time+0.4*position.x*(1.0-time)), 0.5+0.05*normal.z);
+  color = 2.0*time*(1.0-time)*(1.0-time)*vec3(1.0,0.8,0.6);
 */});
 
 Particle.divergenceMaterial=Particle.materialBase(function(){/*
@@ -137,6 +137,6 @@ Particle.divergenceMaterial=Particle.materialBase(function(){/*
 Particle.starMaterial=Particle.materialBase(function(){/*
   float theta = 1000.0*position.x;
   size=2.0;
-  pos = 4.0*time*vec3(vec2(cos(theta),sin(theta))*(1.0+0.2*sin(5.0*theta)),1)+0.2*normal;
+  pos = vec3(4.0*time*vec2(cos(theta),sin(theta))*(1.0+0.2*sin(5.0*theta)),0.5)+0.2*normal;
   color = 4.0*time*time*(1.0-time)*(1.0-time)*vec3(1.0,0.8,0.6);
 */});

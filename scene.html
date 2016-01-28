@@ -92,6 +92,18 @@ document.onkeydown=function(e){
 document.onkeyup=function(e){
   Key.map[e.keyCode]=false;
 }
+var Mouse={x:0.5,y:0.5,dx:0,dy:0}
+document.onmousemove=function(e){
+  if(!window.renderer)return;
+  var canvas=renderer.domElement;
+  var x=(e.pageX-canvas.offsetLeft)/canvas.offsetWidth;
+  var y=(e.pageY-canvas.offsetTop)/canvas.offsetHeight;
+  var dx=2*x-1,dy=1-2*y;
+  dx=Math.max(Math.min(dx,1),-1);
+  dy=Math.max(Math.min(dy,1),-1);
+  Mouse={x:x,y:y,dx:dx,dy:dy};
+}
+
 var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
   {x:0,y:-0.6,r:0.4},
   {x:0,y:-0.3,r:0.5},
@@ -164,9 +176,8 @@ function animate(){
       piano.play(k,0.1);
       setTimeout(function(){piano.play(k+4,0.1)},100);
       setTimeout(function(){piano.play(k+7,0.1)},200);
-      var materials = [
-      Particle.vortexMaterial, Particle.starMaterial, Particle.rippleMaterial];
-      particleSystem.fire(1000,item.position,1,materials[Math.floor(materials.length*Math.random())]);
+      particleSystem.fire(1000,item.position,0.4,Particle.rippleMaterial);
+      particleSystem.fire(1000,item.position,0.6,Particle.vortexMaterial);
     });
   }
 
@@ -174,8 +185,10 @@ function animate(){
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
   if(Key.map[Key.RIGHT])pos.rot-=0.01;
+  pos.rot-=Mouse.dx*0.01;
   if(damage==0){
     var v=(Key.map[Key.UP]?1:0)-(Key.map[Key.DOWN]?1:0);
+    v+=Mouse.dy;
     pos.vx+=Math.cos(pos.th)*0.004*v;
     pos.vy+=Math.sin(pos.th)*0.004*v;
   }
@@ -544,5 +557,5 @@ renderShader = function(size){
 </script>
 <style>
 canvas{position:fixed;left:0;top:0;}
-body{background:black;overflow:hidden;}
+body{background:black;overflow:hidden;cursor: crosshair;}
 </style>
