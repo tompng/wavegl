@@ -37,7 +37,7 @@ onload=function(){
     var r=0.25*Math.pow(1.5,i);
     var lantern=new THREE.Mesh(new THREE.SphereGeometry(r,32,32),lanternmaterial);
     lanterns.push(lantern);
-    lantern.renderOrder=1;
+    lantern.renderOrder=2;
     scene.add(lantern);
   }
 
@@ -69,6 +69,7 @@ onload=function(){
   mapmaterial.uniforms.pattern.value=wavePattern;
   plane.material.uniforms.pattern.value=wavePattern;
   plane.material.uniforms.sky.value=sky;
+  plane.renderOrder=1;
   scene.add(plane);
   renderer = new THREE.WebGLRenderer({antialias:true});
   simulator = new WaveSimulator(wavePixels, renderer);
@@ -363,7 +364,7 @@ function animate(){
 
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=time;
-  plane.material.uniforms.wave.value=simulator.wave;
+  plane.material.uniforms.wave.value=simulator.bytewave;
   var brightness=1+0.1*(
     Math.sin(13.7*time)+Math.sin(7.3*time)+Math.sin(10.3*time)+Math.sin(11.3*time));
   mapmaterial.uniforms.lightColor.value=new THREE.Vector3(
@@ -524,26 +525,19 @@ renderShader = function(size){
   uniform float size, time;
   const vec2 dx = vec2(1.0/SIZE, 0);
   const vec2 dy = vec2(0, 1.0/SIZE);
-  vec4 fetch(vec2 uv){
-    vec2 p = SIZE*uv;
-    vec2 ip = floor(p);
-    vec2 d=p-ip;
-    return texture2D(wave, ip/SIZE)*(1.0-d.x)*(1.0-d.y)+
-    texture2D(wave, ip/SIZE+dx)*d.x*(1.0-d.y)+
-    texture2D(wave, ip/SIZE+dy)*(1.0-d.x)*d.y+
-    texture2D(wave, ip/SIZE+dx+dy)*d.x*d.y;
-  }
   void main(){
     vec2 ripple=
     +texture2D(pattern, 2.5*xyposition/size+time*vec2(0.22,0.0)).xy
     +texture2D(pattern, 2.3*xyposition/size+time*vec2(-0.1,0.2)).xy
     +texture2D(pattern, 2.1*xyposition/size+time*vec2(-0.1,-0.2)).xy
     -vec2(1.5,1.5);
-    vec2 f=vec2(
-      fetch(xyposition/size+dx).z-fetch(xyposition/size-dx).z,
-      fetch(xyposition/size+dy).z-fetch(xyposition/size-dy).z
+    vec2 f=0.01*vec2(
+      texture2D(wave,xyposition/size-dx).xy+
+      texture2D(wave,xyposition/size+dx).xy+
+      texture2D(wave,xyposition/size-dy).xy+
+      texture2D(wave,xyposition/size+dy).xy
+      -vec2(2,2)
     )+ripple*0.005;
-
     vec3 cdif=normalize(vec3(xyposition,0)-cameraPosition);
     vec3 norm=normalize(cdif+16.0*vec3(f,0));
     norm.z=-norm.z;
