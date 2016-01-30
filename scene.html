@@ -121,8 +121,13 @@ var chunkSize=4
 var numChunks=1;
 var chunks = {};
 var escvalue=0;
+var prevtime=0;
 function animate(){
   var time=performance.now()/1000;
+  var deltaFrame=(time-prevtime)*60;
+  if(deltaFrame<0)deltaFrame=0;
+  if(deltaFrame>4)deltaFrame=4;
+  prevtime=time;
   simulator.storeLoad();
   var pix1=simulator.readStoredPixel('chara1');
   var pix2=simulator.readStoredPixel('chara2');
@@ -213,7 +218,7 @@ function animate(){
       if(!hit)hit=triInside(tri,c)||hitTest(tri,c,p.r);
     })
   })
-  var dt=1;
+  var dt=deltaFrame;
   function test(){
     var cos=Math.cos(pos.th+pos.rot*dt),sin=Math.sin(pos.th+pos.rot*dt);
     var hits = [], hit=false;
@@ -246,7 +251,7 @@ function animate(){
     hits = test(dtng);
     dt=dtok;
   }else{
-    dt=1;
+    dt=deltaFrame;
   }
   pos.x+=pos.vx*dt;pos.y+=pos.vy*dt;
   pos.th+=pos.rot*dt;
@@ -260,7 +265,6 @@ function animate(){
         var hv={x:pos.vx-hp.y*pos.rot,y:pos.vy+hp.x*pos.rot};
         var vn=hv.x*h.normal.x+hv.y*h.normal.y;
         if(vn>-0.0){hoge++;
-          console.log('EEE',h.pos.x*h.normal.x+h.pos.y*h.normal.y);
           var pr=Math.sqrt(hp.x*hp.x+hp.y*hp.y);
 
           var vpush=hv.x*h.pos.x+hv.y*h.pos.y;
@@ -522,13 +526,7 @@ renderShader = function(size){
   const vec2 dx = vec2(1.0/SIZE, 0);
   const vec2 dy = vec2(0, 1.0/SIZE);
   void main(){
-    vec2 f=0.01*vec2(
-      texture2D(wave,xyposition/size-dx).xy+
-      texture2D(wave,xyposition/size+dx).xy+
-      texture2D(wave,xyposition/size-dy).xy+
-      texture2D(wave,xyposition/size+dy).xy
-      -vec2(2,2)
-    );
+    vec2 f=0.04*vec2(texture2D(wave,xyposition/size).xy-vec2(0.5,0.5));
     vec3 cdif=normalize(vec3(xyposition,0)-cameraPosition);
     vec3 norm=normalize(cdif+16.0*vec3(f,0));
     norm.z=-norm.z;
