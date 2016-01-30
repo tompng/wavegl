@@ -20,6 +20,7 @@ function resizeView(){
   renderer.domElement.style.left=(window.innerWidth-w)/2+'px';
   renderer.domElement.style.top=(window.innerHeight-h)/2+'px';
 }
+var floatings = [];
 onload=function(){
   width=window.innerWidth;
   height=window.innerHeight;
@@ -33,8 +34,9 @@ onload=function(){
   mapmaterial = mapShader();
   lanternmaterial = lanternShader();
   lanterns=[];
-  for(var i=0;i<4;i++){
-    var r=0.25*Math.pow(1.5,i);
+  sphereGeometry=new THREE.SphereGeometry(1,32,32);
+  for(var i=0;i<3;i++){
+    var r=0.25*Math.pow(2,i);
     var lantern=new THREE.Mesh(new THREE.SphereGeometry(r,32,32),lanternmaterial);
     lanterns.push(lantern);
     lantern.renderOrder=2;
@@ -137,14 +139,28 @@ function animate(){
   simulator.storePixel('chara2',(((pos.x-1)/waveSize%1+1)%1)*wavePixels,((pos.y/waveSize%1+1)%1)*wavePixels);
   simulator.storePixel('chara3',((pos.x/waveSize%1+1)%1)*wavePixels,(((pos.y+1)/waveSize%1+1)%1)*wavePixels);
   simulator.storePixel('chara4',((pos.x/waveSize%1+1)%1)*wavePixels,(((pos.y-1)/waveSize%1+1)%1)*wavePixels);
-  simulator.storeDone();
-  if(pix1&&pix2){
+  floatings = floatings.filter(function(f){
+    var pix=simulator.readStoredPixel('f'+f.id);
+    if(pix){
+      f.position.x+=0.1*pix.vx;
+      f.position.y+=0.1*pix.vy;
+      f.position.z=0.2+0.2*pix.h;
+    }
+    if(f.position.x<pos.x-waveSize||f.position.x>pos.x+waveSize||f.position.y<pos.y-waveSize||f.position.y>pos.y+waveSize){
+      scene.remove(f);
+      return false;
+    }
+    simulator.storePixel('f'+f.id,(((f.position.x+1)/waveSize%1+1)%1)*wavePixels,((f.position.y/waveSize%1+1)%1)*wavePixels);
+    return true;
+  });
+  if(pix1&&pix2&&pix3&&pix4){
     var hx=pix1.h-pix2.h,hy=pix3.h-pix4.h;
     pos.roll.dth+=0.4*(Math.cos(pos.th)*hy-Math.sin(pos.th)*hx)
-    pos.vx=pos.vx*0.99-(pix1.vx+pix2.vx+pix3.vx+pix4.vx)*0.002;
-    pos.vy=pos.vy*0.99-(pix1.vy+pix2.vy+pix3.vy+pix4.vy)*0.002;
+    pos.vx=pos.vx*0.99+(pix1.vx+pix2.vx+pix3.vx+pix4.vx)*0.002;
+    pos.vy=pos.vy*0.99+(pix1.vy+pix2.vy+pix3.vy+pix4.vy)*0.002;
     pos.rot=pos.rot*0.99+(pix1.vy-pix2.vy-pix3.vx+pix4.vx)*0.002;
   }
+  simulator.storeDone();
   var chunkx=Math.round(pos.x/chunkSize/scale);
   var chunky=Math.round(pos.y/chunkSize/scale);
   for(var key in chunks)chunks[key].count++;
@@ -187,6 +203,23 @@ function animate(){
   }
 
   particleSystem.update((width+height)/2);
+
+  if(floatings.length<32){
+    var f=new THREE.Mesh(sphereGeometry,lanternmaterial);
+    f.renderOrder=2;
+    var th=2*Math.PI*Math.random();
+    var r=waveSize*(0.5+0.5*Math.random());
+    f.position.x=pos.x+r*Math.cos(th);
+    f.position.y=pos.y+r*Math.sin(th);
+    f.position.z=0.2;
+    f.scale.x=f.scale.y=f.scale.z=0.1;
+    floatings.push(f);
+    scene.add(f);
+  }
+  floatings.forEach(function(f){
+    var dx=pos.x-f.position.x,dy=pos.y-f.position.y;
+    f.scale.x=f.scale.y=f.scale.z=0.1+0.4/(1+(dx*dx+dy*dy)/4)
+  })
 
   if(Key.map[Key.LEFT])pos.rot+=0.01;
   if(Key.map[Key.RIGHT])pos.rot-=0.01;
@@ -494,7 +527,7 @@ function lanternShader(){
   void main(){
     vec3 lvec=gpos-cameraPosition;
     float d=dot(normalize(lvec),normalize(norm));
-    gl_FragColor.rgb = vec3(0.2,0.15,0.1)*d*d;
+    gl_FragColor.rgb = vec3(0.4,0.3,0.2)*d*d;
     gl_FragColor.a=1.0;
   }
   */

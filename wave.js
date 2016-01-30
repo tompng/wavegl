@@ -64,7 +64,7 @@ function WaveSimulator(size, renderer, pattern) {
       var index = store.positions[id];
       var arr=[]
       for(var i=0;i<4;i++)arr[i]=store.array[4*index+i]/0xff;
-      store.captured[id] = {vx: 2*arr[0]-1, vy: 2*arr[1]-1, h: 2.0*arr[2]-1, a: arr[3]};
+      store.captured[id] = {vx: 1-2*arr[0], vy: 1-2*arr[1], h: 2.0*arr[2]-1, a: arr[3]};
     }
     window.store=store;
     store.index = 0;
@@ -75,6 +75,7 @@ function WaveSimulator(size, renderer, pattern) {
   }
   this.storePixel = function(id,x,y){
     if(store.index==store.max)return;
+    if(x<0||x>=size||y<0||y>=size)return;
     store.positions[id]=store.index;
     var mesh = store.meshes[store.index];
     mesh.position.x = x/size;
