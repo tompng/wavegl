@@ -1,4 +1,4 @@
-function WaveSimulator(size, renderer) {
+function WaveSimulator(size, renderer, pattern) {
   var camera = new THREE.Camera();
   var scene = new THREE.Scene();
   camera.position.z = 1;
@@ -11,7 +11,7 @@ function WaveSimulator(size, renderer) {
   var wave0 = createRenderTarget(size,size);
   var wave1 = createRenderTarget(size,size);
   this.waveNormal = createRenderTarget(size,size,{type:THREE.UnsignedByteType,filter:THREE.LinearFilter});
-  var normalShader = WaveSimulator.normalShader(size);
+  var normalShader = WaveSimulator.normalShader(size, pattern);
   var maxStore = 128;
   var store = {
     target: createRenderTarget(2,2*maxStore,{type:THREE.UnsignedByteType}),
@@ -94,6 +94,7 @@ function WaveSimulator(size, renderer) {
 
     mesh.material = normalShader;
     normalShader.uniforms.wave.value = wave1;
+    if(pattern)normalShader.uniforms.time.value = performance.now()/1000;
     renderer.render(scene, camera, this.waveNormal);
 
     mesh.material = waveShader;
@@ -205,10 +206,17 @@ WaveSimulator.waveShader = function(size){
   */
 }
 
-WaveSimulator.normalShader = function(size){
+WaveSimulator.normalShader = function(size, pattern){
+  var uniforms = {wave: {type: 't'}};
+  var defines = {SIZE: size.toFixed(2)};
+  if(pattern){
+    uniforms.pattern = {type: 't', value: pattern};
+    uniforms.time = {type: 'f'};
+    defines.PATTERN = '1';
+  }
   return new THREE.ShaderMaterial({
-    uniforms: {wave: {type: "t"}},
-    defines: {SIZE: size.toFixed(2)},
+    uniforms: uniforms,
+    defines: defines,
     vertexShader: WaveSimulator.vertexShaderCode,
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
@@ -220,16 +228,26 @@ WaveSimulator.normalShader = function(size){
   const vec2 dx = vec2(1.0/SIZE, 0);
   const vec2 dy = vec2(0, 1.0/SIZE);
   uniform sampler2D wave;
-    void main(){
-      vec2 hax0 = texture2D(wave,gl_FragCoord.xy/SIZE-dx).zw;
-      vec2 hax1 = texture2D(wave,gl_FragCoord.xy/SIZE+dx).zw;
-      vec2 hay0 = texture2D(wave,gl_FragCoord.xy/SIZE-dy).zw;
-      vec2 hay1 = texture2D(wave,gl_FragCoord.xy/SIZE+dy).zw;
-      gl_FragColor = vec4(
-        vec2(0.5,0.5)+32.0*vec2(hax1.x-hax0.x,hay1.x-hay0.x),
-        (hax0+hax1+hay0+hay1)/4.0
-      );
-    }
+  #ifdef PATTERN
+  uniform float time;
+  uniform sampler2D pattern;
+  #endif
+  void main(){
+    vec2 coord = gl_FragCoord.xy/SIZE;
+    vec2 hax0 = texture2D(wave,coord-dx).zw;
+    vec2 hax1 = texture2D(wave,coord+dx).zw;
+    vec2 hay0 = texture2D(wave,coord-dy).zw;
+    vec2 hay1 = texture2D(wave,coord+dy).zw;
+    vec2 norm = 32.0*vec2(hax1.x-hax0.x,hay1.x-hay0.x);
+    #ifdef PATTERN
+    norm = norm+
+      0.25*(+texture2D(pattern, 3.0*coord+time*vec2(0.22,0.0)).xy
+      +texture2D(pattern, 3.0*coord+time*vec2(-0.1,0.2)).yz
+      +texture2D(pattern, 3.0*coord+time*vec2(-0.1,-0.2)).zx
+      -vec2(1.5,1.5));
+    #endif
+    gl_FragColor = vec4(vec2(0.5,0.5)+norm, 0.25*(hax0+hax1+hay0+hay1));
+  }
   */
 }
 
