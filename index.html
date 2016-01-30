@@ -53,12 +53,16 @@ onload=function(){
   itemWaveShader2.uniforms.value.value=new THREE.Vector4(0,0,0.5,1);
 
   chara = gondolaMesh();
-  charaWaveShader1 = WaveSimulator.waveMultShader();
-  charaWaveShader2 = WaveSimulator.waveAddShader();
-  charawave1=new THREE.Mesh(new THREE.CircleGeometry(0.5,16),charaWaveShader1);
-  charawave2=new THREE.Mesh(new THREE.CircleGeometry(0.5,16),charaWaveShader2);
-  charawave1.visible=charawave2.visible=false;
-  scene.add(charawave1,charawave2);
+  var charawavegeometry = new THREE.CircleGeometry(0.4,16);
+  charawavef1=new THREE.Mesh(charawavegeometry, WaveSimulator.waveMultShader());
+  charawavef2=new THREE.Mesh(charawavegeometry, WaveSimulator.waveAddShader());
+  charawaveb1=new THREE.Mesh(charawavegeometry, WaveSimulator.waveMultShader());
+  charawaveb2=new THREE.Mesh(charawavegeometry, WaveSimulator.waveAddShader());
+  charawavef1.visible=charawavef2.visible=false;
+  charawaveb1.visible=charawaveb2.visible=false;
+  charawavef1.material.uniforms.value.value=new THREE.Vector4(0,0,1,1);
+  charawaveb1.material.uniforms.value.value=new THREE.Vector4(0,0,1,1);
+  scene.add(charawavef1,charawavef2,charawaveb1,charawaveb2);
 
   wavePattern = THREE.ImageUtils.loadTexture('texture/wave.jpg');
   sky = THREE.ImageUtils.loadTexture('texture/sky.jpg');
@@ -368,11 +372,17 @@ function animate(){
     y:(cornerPos.y%wavePixels+wavePixels)%wavePixels
   }
 
-  charawave1.visible=charawave2.visible=true;
-  charawave1.position.x=charawave2.position.x=pos.x;
-  charawave1.position.y=charawave2.position.y=pos.y;
-  charaWaveShader1.uniforms.value.value=new THREE.Vector4(0,0,1,1);
-  charaWaveShader2.uniforms.value.value=new THREE.Vector4(0.5-4*pos.vx,0.5-4*pos.vy,0,1);
+  charawavef1.visible=charawavef2.visible=true;
+  charawaveb1.visible=charawaveb2.visible=true;
+  var dist=0.4;
+  charawavef1.position.x=charawavef2.position.x=pos.x+dist*Math.cos(pos.th);
+  charawavef1.position.y=charawavef2.position.y=pos.y+dist*Math.sin(pos.th);
+  charawaveb1.position.x=charawaveb2.position.x=pos.x-dist*Math.cos(pos.th);
+  charawaveb1.position.y=charawaveb2.position.y=pos.y-dist*Math.sin(pos.th);
+  var vf={x:pos.vx-dist*pos.rot*Math.sin(pos.th),y:pos.vy+dist*pos.rot*Math.cos(pos.th)};
+  var vb={x:pos.vx+dist*pos.rot*Math.sin(pos.th),y:pos.vy-dist*pos.rot*Math.cos(pos.th)};
+  charawavef2.material.uniforms.value.value=new THREE.Vector4(0.5-4*vf.x,0.5-4*vf.y,0,1);
+  charawaveb2.material.uniforms.value.value=new THREE.Vector4(0.5-4*vb.x,0.5-4*vb.y,0,1);
 
   itemWaveShader2.uniforms.value.value.z=0.5+0.1*Math.sin(4*time);
 
@@ -404,7 +414,8 @@ function animate(){
   scene.children.forEach(function(mesh){
     mesh.visible=mesh.wasvisible;
   });
-  charawave1.visible=charawave2.visible=false;
+  charawavef1.visible=charawavef2.visible=false;
+  charawaveb1.visible=charawaveb2.visible=false;
 
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.wave.value=simulator.waveNormal;
