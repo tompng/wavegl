@@ -107,7 +107,7 @@ function Piano(time, uptime, strength){
   var num=4;
   var sounds=[];
   for(var k=0;k<=24;k++){
-    var freq=441*Math.pow(2,k/12);
+    var freq=441*2*Math.pow(2,k/12);
     var url=wave2url(decaySoundWave(time,uptime,freq,strength));
     sounds[k]=[];
     for(var i=0;i<num;i++){
