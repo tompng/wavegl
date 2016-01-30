@@ -289,7 +289,7 @@ function WaterwayChunk(i,j,n,scale,scene,wavescene){
   scene.add(this.roof);
   scene.add(this.mesh);
 
-  var triarr=new Float32Array(triangles.length*9);
+  var triarr=[];
   for(var i=0;i<triangles.length;i++){
     var tri=triangles[i];
     for(var j=0;j<3;j++){
@@ -299,13 +299,17 @@ function WaterwayChunk(i,j,n,scale,scene,wavescene){
       var cos=(db.x*dc.x+db.y*dc.y)/rb/rc;
       var sin=Math.sqrt(1-cos*cos);
       var reduce=0.2;
-      triarr[9*i+3*j+0]=a.x+(db.x/rb+dc.x/rc)/sin*reduce;
-      triarr[9*i+3*j+1]=a.y+(db.y/rb+dc.y/rc)/sin*reduce;
-      triarr[9*i+3*j+2]=0;
+      if(sin>0){
+        triarr.push(
+          a.x+(db.x/rb+dc.x/rc)/sin*reduce,
+          a.y+(db.y/rb+dc.y/rc)/sin*reduce,
+          0
+        );
+      }
     }
   }
   var trigeometry=new THREE.BufferGeometry();
-  trigeometry.addAttribute('position', new THREE.BufferAttribute(triarr, 3));
+  trigeometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(triarr), 3));
   this.trimesh1 = new THREE.Mesh(trigeometry);
   this.trimesh2 = new THREE.Mesh(trigeometry);
   wavescene.add(this.trimesh1)
