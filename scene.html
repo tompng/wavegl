@@ -364,7 +364,7 @@ function animate(){
 
   plane.material.uniforms.size.value=waveSize;
   plane.material.uniforms.time.value=time;
-  plane.material.uniforms.wave.value=simulator.bytewave;
+  plane.material.uniforms.wave.value=simulator.waveNormal;
   var brightness=1+0.1*(
     Math.sin(13.7*time)+Math.sin(7.3*time)+Math.sin(10.3*time)+Math.sin(11.3*time));
   mapmaterial.uniforms.lightColor.value=new THREE.Vector3(

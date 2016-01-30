@@ -5,8 +5,16 @@
 
 onload=function(){
   camera = new THREE.Camera();
-  camera.position.z = 1;
   scene = new THREE.Scene();
+  plane = new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.MeshBasicMaterial());
+  plane.material.blending = THREE.NoBlending
+  plane.material.blendSrc = THREE.OneFactor
+  plane.material.blendDst = THREE.ZeroFactor
+  scene.add(plane);
+  wavescene = new THREE.Scene();
+  charawave1=new THREE.Mesh(new THREE.CircleGeometry(0.1,16),WaveSimulator.waveMultShader());
+  charawave2=new THREE.Mesh(new THREE.CircleGeometry(0.1,16),WaveSimulator.waveAddShader());
+  wavescene.add(charawave1,charawave2);
 
   renderer = new THREE.WebGLRenderer();
   renderer.setClearColor(new THREE.Color(0x0000ff));
@@ -38,8 +46,8 @@ onload=function(){
       var arr=simulator.readStoredPixel('div'+id);
       simulator.storePixel('div'+id,this.x*512,512-this.y*512);
       if(arr){
-        this.x-=(arr[0]-0.5)*0.001*2;
-        this.y+=(arr[1]-0.5)*0.001*2;
+        this.x-=(arr[0]-0.5)*0.001*4;
+        this.y+=(arr[1]-0.5)*0.001*4;
       }
       this.x=(this.x+1)%1;
       this.y=(this.y+1)%1;
@@ -74,37 +82,16 @@ onload=function(){
     var r=0.01;
     divs.forEach(function(d){d.calc()});
     simulator.storeDone();
-    simulator.disturb({
-      center: new THREE.Vector2(mouse.x, mouse.y),
-      overwrite: 0,
-      radius: r,
-      scale: new THREE.Vector4(1,1,1,1),
-      value: new THREE.Vector4(-mouse.vx*100,-mouse.vy*100,0,0)
-    })
-    simulator.disturb({
-      center: new THREE.Vector2(mouse.x,mouse.y),
-      overwrite: 0,
-      radius: 0.002,
-      scale: new THREE.Vector4(1,1,1,0.999),
-      value: new THREE.Vector4(0,0,0,10*mouse.val)
-    })
+    charawave1.position.x=charawave2.position.x=2*mouse.x-1;
+    charawave1.position.y=charawave2.position.y=2*mouse.y-1;
+    charawave1.material.uniforms.value.value=new THREE.Vector4(0,0,1,1);
+    charawave2.material.uniforms.value.value=new THREE.Vector4(0.5-16*mouse.vx,0.5-16*mouse.vy,0,1);
+    renderer.autoClear=false;
+    renderer.render(wavescene, camera, simulator.wave);
     simulator.calc();
-    simulator.disturb({
-      center: new THREE.Vector2(0.3,0.2),
-      overwrite: 1,
-      radius: 0.1,
-      scale: new THREE.Vector4(0,0,1,0),
-      value: new THREE.Vector4(0,0,0,1)
-    })
-    simulator.disturb({
-      center: new THREE.Vector2(0.6,0.3),
-      overwrite: 1,
-      radius: 0.1,
-      scale: new THREE.Vector4(0,0,1,0),
-      value: new THREE.Vector4(0,0,0,0)
-    })
-    simulator.show();
     dtav=0.95*dtav+0.05*(performance.now()-t0);
+    plane.material.map=simulator.wave;
+    renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
 }
