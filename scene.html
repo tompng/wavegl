@@ -88,15 +88,21 @@ onload=function(){
   resizeView();
   animate();
 }
-var Key={LEFT:37,UP:38,RIGHT:39,DOWN:40,map:{}};
+var Key={LEFT:37,UP:38,RIGHT:39,DOWN:40,map:{},conv: {W:38,A:37,S:40,D:39}};
 document.onkeydown=function(e){
+  Mouse.x=Mouse.y=0.5;Mouse.dx=Mouse.dy=0;
   Key.map[e.keyCode]=true;
+  var c=Key.conv[String.fromCharCode(e.keyCode)];
+  if(c)Key.map[c]=true;
 }
 document.onkeyup=function(e){
   Key.map[e.keyCode]=false;
+  var c=Key.conv[String.fromCharCode(e.keyCode)];
+  if(c)Key.map[c]=false;
 }
 var Mouse={x:0.5,y:0.5,dx:0,dy:0}
 document.onmousemove=function(e){
+  Key.map={};
   if(!window.renderer)return;
   var canvas=renderer.domElement;
   var x=(e.pageX-canvas.offsetLeft)/canvas.offsetWidth;
