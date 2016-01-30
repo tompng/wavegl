@@ -43,11 +43,11 @@ onload=function(){
     };
     div.update();
     div.calc=function(){
-      var arr=simulator.readStoredPixel('div'+id);
+      var pix=simulator.readStoredPixel('div'+id);
       simulator.storePixel('div'+id,this.x*512,512-this.y*512);
-      if(arr){
-        this.x-=(arr[0]-0.5)*0.001*4;
-        this.y+=(arr[1]-0.5)*0.001*4;
+      if(pix){
+        this.x-=0.002*pix.vx;
+        this.y+=0.002*pix.vy;
       }
       this.x=(this.x+1)%1;
       this.y=(this.y+1)%1;

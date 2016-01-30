@@ -124,21 +124,21 @@ var escvalue=0;
 function animate(){
   var time=performance.now()/1000;
   simulator.storeLoad();
-  var arr1=simulator.readStoredPixel('chara1');
-  var arr2=simulator.readStoredPixel('chara2');
-  var arr3=simulator.readStoredPixel('chara3');
-  var arr4=simulator.readStoredPixel('chara4');
+  var pix1=simulator.readStoredPixel('chara1');
+  var pix2=simulator.readStoredPixel('chara2');
+  var pix3=simulator.readStoredPixel('chara3');
+  var pix4=simulator.readStoredPixel('chara4');
   simulator.storePixel('chara1',(((pos.x+1)/waveSize%1+1)%1)*wavePixels,((pos.y/waveSize%1+1)%1)*wavePixels);
   simulator.storePixel('chara2',(((pos.x-1)/waveSize%1+1)%1)*wavePixels,((pos.y/waveSize%1+1)%1)*wavePixels);
   simulator.storePixel('chara3',((pos.x/waveSize%1+1)%1)*wavePixels,(((pos.y+1)/waveSize%1+1)%1)*wavePixels);
   simulator.storePixel('chara4',((pos.x/waveSize%1+1)%1)*wavePixels,(((pos.y-1)/waveSize%1+1)%1)*wavePixels);
   simulator.storeDone();
-  if(arr1&&arr2){
-    var hx=arr1[2]-arr2[2],hy=arr3[2]-arr4[2];
-    pos.roll.dth+=0.2*(Math.cos(pos.th)*hy-Math.sin(pos.th)*hx)
-    pos.vx=pos.vx*0.99-(arr1[0]+arr2[0]+arr3[0]+arr4[0]-2)*0.002;
-    pos.vy=pos.vy*0.99-(arr1[1]+arr2[1]+arr3[1]+arr4[1]-2)*0.002;
-    pos.rot=pos.rot*0.99+(arr1[1]-arr2[1]-arr3[0]+arr4[0])*0.002;
+  if(pix1&&pix2){
+    var hx=pix1.h-pix2.h,hy=pix3.h-pix4.h;
+    pos.roll.dth+=0.4*(Math.cos(pos.th)*hy-Math.sin(pos.th)*hx)
+    pos.vx=pos.vx*0.99-(pix1.vx+pix2.vx+pix3.vx+pix4.vx)*0.002;
+    pos.vy=pos.vy*0.99-(pix1.vy+pix2.vy+pix3.vy+pix4.vy)*0.002;
+    pos.rot=pos.rot*0.99+(pix1.vy-pix2.vy-pix3.vx+pix4.vx)*0.002;
   }
   var chunkx=Math.round(pos.x/chunkSize/scale);
   var chunky=Math.round(pos.y/chunkSize/scale);

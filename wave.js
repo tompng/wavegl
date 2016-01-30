@@ -14,8 +14,8 @@ function WaveSimulator(size, renderer, pattern) {
   var normalShader = WaveSimulator.normalShader(size, pattern);
   var maxStore = 128;
   var store = {
-    target: createRenderTarget(2,2*maxStore,{type:THREE.UnsignedByteType}),
-    array: new Uint8Array(2*2*maxStore*4),
+    target: createRenderTarget(1,maxStore,{type:THREE.UnsignedByteType}),
+    array: new Uint8Array(maxStore*4),
     position: {},
     index: 0,
     max: maxStore
@@ -56,15 +56,15 @@ function WaveSimulator(size, renderer, pattern) {
     if(store.index){
       gl.bindFramebuffer(gl.FRAMEBUFFER, store.target.__webglFramebuffer, true);
       gl.bindFramebuffer(gl.FRAMEBUFFER,store.target.__webglFramebuffer,true);
-      gl.readPixels(0, 0, 2, 2*store.index, gl.RGBA, gl.UNSIGNED_BYTE, store.array);
+      gl.readPixels(0, 0, 1, store.index, gl.RGBA, gl.UNSIGNED_BYTE, store.array);
     }
     store.meshes.forEach(function(m){m.visible=false;})
     store.captured = {};
     for(var id in store.positions){
       var index = store.positions[id];
       var arr=[]
-      for(var i=0;i<16;i++)arr[i]=store.array[16*index+i]/0xff;
-      store.captured[id] = arr;
+      for(var i=0;i<4;i++)arr[i]=store.array[4*index+i]/0xff;
+      store.captured[id] = {vx: 2*arr[0]-1, vy: 2*arr[1]-1, h: 2.0*arr[2]-1, a: arr[3]};
     }
     window.store=store;
     store.index = 0;
