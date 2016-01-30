@@ -31,7 +31,6 @@ onload=function(){
   camera.initialRotation=camera.rotation.clone()
   scene = new THREE.Scene();
   particleSystem = new Particle.System(scene);
-  mapmaterial = mapShader();
   lanternmaterial = lanternShader();
   lanterns=[];
   sphereGeometry=new THREE.SphereGeometry(1,32,32);
@@ -60,15 +59,17 @@ onload=function(){
   charawave2=new THREE.Mesh(new THREE.CircleGeometry(0.5,16),charaWaveShader2);
   charawave1.visible=charawave2.visible=false;
   scene.add(charawave1,charawave2);
+
+  wavePattern = THREE.ImageUtils.loadTexture('texture/wave.jpg');
+  sky = THREE.ImageUtils.loadTexture('texture/sky.jpg');
+  wavePattern.wrapS = wavePattern.wrapT = THREE.RepeatWrapping;
+  mapmaterial = mapShader(wavePattern);
+  maproofmaterial = mapShader();
   undine = new Undine(mapmaterial);
   undine.meshes.forEach(function(m){scene.add(m)});
   chara.material = mapmaterial;
   scene.add(chara);
-  wavePattern = THREE.ImageUtils.loadTexture('texture/wave.jpg');
-  sky = THREE.ImageUtils.loadTexture('texture/sky.jpg');
-  wavePattern.wrapS = wavePattern.wrapT = THREE.RepeatWrapping;
   plane = new THREE.Mesh(new THREE.PlaneGeometry(waveSize*4, waveSize*4), renderShader(wavePixels));
-  mapmaterial.uniforms.pattern.value=wavePattern;
   plane.material.uniforms.sky.value=sky;
   plane.renderOrder=1;
   scene.add(plane);
@@ -170,6 +171,7 @@ function animate(){
       if(!chunk){
         console.log('gen',i,j);
         chunk=chunks[[i,j]]=new WaterwayChunk(i,j,chunkSize,scale,scene);
+        chunk.roof.material=maproofmaterial;
         chunk.mesh.material=mapmaterial;
         chunk.trimesh1.material=wallshader1;
         chunk.trimesh2.material=wallshader2;
@@ -402,7 +404,7 @@ function animate(){
   plane.material.uniforms.wave.value=simulator.waveNormal;
   var brightness=1+0.1*(
     Math.sin(13.7*time)+Math.sin(7.3*time)+Math.sin(10.3*time)+Math.sin(11.3*time));
-  mapmaterial.uniforms.lightColor.value=new THREE.Vector3(
+  mapmaterial.uniforms.lightColor.value=maproofmaterial.uniforms.lightColor.value=new THREE.Vector3(
     0.5*brightness,
     0.3*brightness,
     0
@@ -415,7 +417,7 @@ function animate(){
     y: pos.y+0.8*Math.sin(pos.th)-0.75*Math.cos(pos.th)*ry,
     z: 0.75*rz-0.1
   }
-  mapmaterial.uniforms.lightPosition.value=new THREE.Vector3(light.x,light.y,light.z);
+  mapmaterial.uniforms.lightPosition.value=maproofmaterial.uniforms.lightPosition.value=new THREE.Vector3(light.x,light.y,light.z);
   lanterns.forEach(function(l){
     l.position.x=light.x;
     l.position.y=light.y;
@@ -460,14 +462,20 @@ function hitTest(tri,p,r){
   return {x: pos.x/pr, y: pos.y/pr}
 }
 
-function mapShader(){
+function mapShader(pattern){
+  var defines = {};
+  var uniforms = {
+    lightPosition: {type: 'v3'},
+    lightColor: {type: 'v3'}
+  };
+  if(pattern){
+    defines = {WALL: '1'};
+    uniforms.time={type: 'f'};
+    uniforms.pattern={type: 't', value: pattern};
+  }
   return new THREE.ShaderMaterial({
-    uniforms: {
-      lightPosition: {type: "v3"},
-      pattern: {type: "t"},
-      time: {type: "f"},
-      lightColor: {type: "v3"}
-    },
+    defines: defines,
+    uniforms: uniforms,
     vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
   });
@@ -482,8 +490,10 @@ function mapShader(){
   /*FRAG
   varying vec3 gpos, norm;
   uniform vec3 lightPosition, lightColor;
+  #ifdef WALL
   uniform sampler2D pattern;
   uniform float time;
+  #endif
   void main(){
     vec3 ldif=gpos-lightPosition;
     float lr=dot(ldif,ldif);
@@ -493,11 +503,16 @@ function mapShader(){
 
     vec3 i3=vec3(1,1,1);
     float a=0.1,b=0.07;
+
+    #ifdef WALL
     float c1=dot(texture2D(pattern,a*gpos.xy-b*gpos.yz+vec2(+0.1,0.0)*time).rgb-0.5,i3);
     float c2=dot(texture2D(pattern,a*gpos.yz-b*gpos.zx+vec2(-0.05,+0.1)*time).rgb-0.5,i3);
     float c3=dot(texture2D(pattern,a*gpos.zx-b*gpos.xy+vec2(-0.05,-0.1)*time).rgb-0.5,i3);
-
     float caustics = 1.0/(1.0+32.0*c1*c1)+1.0/(1.0+32.0*c2*c2)+1.0/(1.0+32.0*c3*c3);
+    #endif
+    #ifndef WALL
+    float caustics = 0.0;
+    #endif
 
     gl_FragColor.rgb=lightColor*lval1+lval2*vec3(0.05,0.05,0.1)+caustics*lval1*vec3(0.1,0.1,0.2);
     gl_FragColor.a=1.0;

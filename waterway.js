@@ -201,6 +201,8 @@ function WaterwayChunk(i,j,n,scale,scene){
   var positions = [];
   var normals = [];
   var triangles = [];
+  var roofPositions = [];
+  var roofNormals = [];
   ways.triangles.forEach(function(triangle){
     triangles.push(triangle.map(function(p){
       return {x:p.x*scale,y:p.y*scale}
@@ -240,12 +242,11 @@ function WaterwayChunk(i,j,n,scale,scene){
     });
     for(var i=0;i<points.length;i++){
       var a=points[i],b=points[(i+1)%points.length];
-      positions.push(
+      roofPositions.push(
         a.x,a.y,a.z||height,
         b.x,b.y,b.z||height,
         center.x,center.y,center.z
       );
-      var idx=positions.length-9;
       var va={x:a.x-center.x,y:a.y-center.y,z:(a.z||height)-(center.z||height)}
       var vb={x:b.x-center.x,y:b.y-center.y,z:(b.z||height)-(center.z||height)}
       var n={
@@ -254,7 +255,7 @@ function WaterwayChunk(i,j,n,scale,scene){
         z:va.x*vb.y-va.y*vb.x,
       };
       var nr=Math.sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
-      for(var j=0;j<3;j++)normals.push(n.x/nr,n.y/nr,n.z/nr);
+      for(var j=0;j<3;j++)roofNormals.push(n.x/nr,n.y/nr,n.z/nr);
       var az=a.z||height;
       var bz=b.z||height;
       positions.push(
@@ -271,14 +272,21 @@ function WaterwayChunk(i,j,n,scale,scene){
   }
   var varr = new Float32Array(positions);
   var narr = new Float32Array(normals);
-  geometry = new THREE.BufferGeometry();
+  var rvarr = new Float32Array(roofPositions);
+  var rnarr = new Float32Array(roofNormals);
+  var geometry = new THREE.BufferGeometry();
   geometry.addAttribute('position', new THREE.BufferAttribute(varr, 3));
   geometry.addAttribute('normal', new THREE.BufferAttribute(narr, 3));
+  var roofGeometry = new THREE.BufferGeometry();
+  roofGeometry.addAttribute('position', new THREE.BufferAttribute(rvarr, 3));
+  roofGeometry.addAttribute('normal', new THREE.BufferAttribute(rnarr, 3));
   this.mesh = new THREE.Mesh(geometry);
+  this.roof = new THREE.Mesh(roofGeometry);
   this.triangles = triangles;
   this.lines = ways.lines.map(function(l){
     return l.map(function(p){return {x: p.x*scale, y: p.y*scale}});
   });
+  scene.add(this.roof);
   scene.add(this.mesh);
 
   var triarr=new Float32Array(triangles.length*9);
@@ -343,7 +351,9 @@ function WaterwayChunk(i,j,n,scale,scene){
     scene.remove(this.trimesh1);
     scene.remove(this.trimesh2);
     geometry.dispose();
+    roofGeometry.dispose();
     scene.remove(this.mesh);
+    scene.remove(this.roof);
   }
   this.update = function(pos){
     var hitItems = []
@@ -494,7 +504,7 @@ function gondolaMesh(){
   }
   var varr = new Float32Array(positions);
   var narr = new Float32Array(normals);
-  geometry = new THREE.BufferGeometry();
+  var geometry = new THREE.BufferGeometry();
   geometry.addAttribute('position', new THREE.BufferAttribute(varr, 3));
   geometry.addAttribute('normal', new THREE.BufferAttribute(narr, 3));
   return new THREE.Mesh(geometry);
