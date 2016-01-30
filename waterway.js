@@ -192,7 +192,7 @@ Waterway.nearestHotspot=function(x,y){
   return hmin;
 }
 
-function WaterwayChunk(i,j,n,scale,scene){
+function WaterwayChunk(i,j,n,scale,scene,wavescene){
   this.i=i;
   this.j=j;
   this.n=n;
@@ -307,13 +307,9 @@ function WaterwayChunk(i,j,n,scale,scene){
   var trigeometry=new THREE.BufferGeometry();
   trigeometry.addAttribute('position', new THREE.BufferAttribute(triarr, 3));
   this.trimesh1 = new THREE.Mesh(trigeometry);
-  this.trimesh1.visible=false;
-  this.trimesh1.wall1=true;
   this.trimesh2 = new THREE.Mesh(trigeometry);
-  this.trimesh2.visible=false;
-  this.trimesh2.wall2=true;
-  scene.add(this.trimesh1)
-  scene.add(this.trimesh2);
+  wavescene.add(this.trimesh1)
+  wavescene.add(this.trimesh2);
 
   var itemGeometry = new THREE.BoxGeometry(1, 1, 1);
   var itemWaveGeometry = new THREE.CircleGeometry(0.25,16);
@@ -330,26 +326,23 @@ function WaterwayChunk(i,j,n,scale,scene){
     item.rotateX(Math.random());
     item.rotateY(Math.random());
     item.rotateZ(Math.random());
-    item.item=true;
-    wave1.wall1=true;wave2.wall2=true;
-    wave1.visible=wave2.visible=false;
     item.wave1=wave1;item.wave2=wave2;
     scene.add(item);
-    scene.add(wave1,wave2);
+    wavescene.add(wave1,wave2);
     this.items.push(item);
   }
 
   this.dispose = function(){
     this.items.forEach(function(item){
       scene.remove(item);
-      scene.remove(item.wave1);
-      scene.remove(item.wave2);
+      wavescene.remove(item.wave1);
+      wavescene.remove(item.wave2);
     })
     itemGeometry.dispose();
     itemWaveGeometry.dispose();
     trigeometry.dispose();
-    scene.remove(this.trimesh1);
-    scene.remove(this.trimesh2);
+    wavescene.remove(this.trimesh1);
+    wavescene.remove(this.trimesh2);
     geometry.dispose();
     roofGeometry.dispose();
     scene.remove(this.mesh);
