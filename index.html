@@ -32,6 +32,7 @@ onload=function(){
   scene = new THREE.Scene();
   wavescene = new THREE.Scene();
   particleSystem = new Particle.System(scene);
+  itemmaterial = itemShader();
   lanternmaterial = lanternShader();
   lanterns=[];
   sphereGeometry=new THREE.SphereGeometry(1,32,32);
@@ -137,6 +138,7 @@ var zoomin=0;
 var prevtime=0;
 function animate(){
   var time=performance.now()/1000;
+  itemmaterial.uniforms.time.value=time;
   var deltaFrame=(time-prevtime)*60;
   if(deltaFrame<0)deltaFrame=0;
   if(deltaFrame>4)deltaFrame=4;
@@ -186,6 +188,8 @@ function animate(){
         chunk.trimesh1.material=wallshader1;
         chunk.trimesh2.material=wallshader2;
         chunk.items.forEach(function(item){
+          item.material = itemmaterial;
+          item.renderOrder=2;
           item.wave1.material=itemWaveShader1
           item.wave2.material=itemWaveShader2
         })
@@ -563,6 +567,33 @@ function lanternShader(){
     float d=dot(normalize(lvec),normalize(norm));
     gl_FragColor.rgb = vec3(0.4,0.3,0.2)*d*d;
     gl_FragColor.a=1.0;
+  }
+  */
+}
+
+function itemShader(){
+  return new THREE.ShaderMaterial({
+    uniforms: {time: {type: 'f'}},
+    vertexShader: WaveSimulator.shaderCode(arguments.callee, 'VERT'),
+    fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG')
+  });
+  /*VERT
+  varying vec3 gpos;
+  void main(){
+    gpos=(modelMatrix*vec4(position,1)).xyz;
+    gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);
+  }
+  */
+  /*FRAG
+  varying vec3 gpos;
+  uniform float time;
+  void main(){
+    gl_FragColor.rgb = (
+      0.2*sin(gpos+time)+
+      0.2*sin(2.0*gpos-2.0*time)+
+      0.2*sin(4.0*gpos.zxy+4.0*time)+
+      0.8
+    );
   }
   */
 }
