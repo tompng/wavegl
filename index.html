@@ -133,6 +133,7 @@ var chunkSize=4
 var numChunks=1;
 var chunks = {};
 var escvalue=0;
+var zoomin=0;
 var prevtime=0;
 function animate(){
   var time=performance.now()/1000;
@@ -206,10 +207,24 @@ function animate(){
     hits.forEach(function(item){
       var k=[0,4,7,12,16][Math.floor(5*Math.random())]
       piano.play(k,0.1);
-      setTimeout(function(){piano.play(k+4,0.1)},100);
-      setTimeout(function(){piano.play(k+7,0.1)},200);
       particleSystem.fire(1000,item.position,0.4,Particle.rippleMaterial);
-      particleSystem.fire(1000,item.position,0.6,Particle.vortexMaterial);
+      if(Math.random()<0.25){
+        setTimeout(function(){piano.play(k+4,0.1)},100);
+        setTimeout(function(){piano.play(k+7,0.1)},200);
+        particleSystem.fire(1000,item.position,0.6,Particle.vortexMaterial);
+      }
+      if(Math.random()<0.05){
+        zoomin=true;
+        pos.vx=pos.vy=pos.rot=0;
+        particleSystem.fire(4000,item.position,2,Particle.starMaterial);
+        particleSystem.fire(4000,item.position,2,Particle.vortexMaterial);
+        [0,1,2,3,4,5,6,7].forEach(function(k){
+          setTimeout(function(){
+            piano.play(12+[0,2,4,5,7,9,11,12][k], 0.2);
+          },100*k);
+        })
+        setTimeout(function(){zoomin=false;},2000);
+      }
     });
   }
 
@@ -343,9 +358,11 @@ function animate(){
   pos.rot*=0.8;
   vcam.rotxy = vcam.rotxy*0.8+pos.th*0.2;
   var back=5;
+  back+=3*escvalue
   vcam.x=vcam.x*0.8+0.2*(pos.x-back*Math.cos(pos.th))
   vcam.y=vcam.y*0.8+0.2*(pos.y-back*Math.sin(pos.th))
-  escvalue=escvalue*0.95+0.05*((Key.map['2'.charCodeAt(0)]?1:0)-(Key.map['1'.charCodeAt(0)]?1:0));
+  escvalue=escvalue*0.98+0.02*((Key.map['2'.charCodeAt(0)]?1:0)-(Key.map['1'.charCodeAt(0)]||zoomin?1:0));
+
   vcam.z=20*Math.pow(2,3*escvalue)
   vcam.rotz = -Math.PI/2+(escvalue>0 ? 0.3*(1-escvalue) : 0.3-escvalue)
   vcam.apply(camera);
