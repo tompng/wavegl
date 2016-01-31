@@ -116,7 +116,7 @@ document.onmousemove=function(e){
   Mouse={x:x,y:y,dx:dx,dy:dy};
 }
 
-var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
+var pos={x:0,y:0,th:0,rot:0,vx:0,vy:0,r:1,shape:[
   {x:0,y:-0.6,r:0.4},
   {x:0,y:-0.3,r:0.5},
   {x:0,y:-0.05,r:0.55},
@@ -126,7 +126,7 @@ var pos={x:0,y:0,th:Math.PI/2,rot:0,vx:0,vy:0,r:1,shape:[
 ],
   roll: {th: 0, dth: 0}
 }
-var camth=pos.th;
+var vcam = new ViewCamera();
 var damage=0;
 var state='start'
 var chunkSize=4
@@ -341,17 +341,14 @@ function animate(){
 
   chara.rotateX(pos.roll.th);
   pos.rot*=0.8;
-  camth=camth*0.8+pos.th*0.2;
+  vcam.rotxy = vcam.rotxy*0.8+pos.th*0.2;
   var back=5;
-  camera.position.x=camera.position.x*0.8+0.2*(pos.x-back*Math.cos(pos.th))
-  camera.position.y=camera.position.y*0.8+0.2*(pos.y-back*Math.sin(pos.th))
+  vcam.x=vcam.x*0.8+0.2*(pos.x-back*Math.cos(pos.th))
+  vcam.y=vcam.y*0.8+0.2*(pos.y-back*Math.sin(pos.th))
   escvalue=escvalue*0.95+0.05*((Key.map['2'.charCodeAt(0)]?1:0)-(Key.map['1'.charCodeAt(0)]?1:0));
-  camera.position.z=20*Math.pow(2,3*escvalue)
-  camera.setRotationFromAxisAngle({x:1,y:0,z:0},0)
-  camera.rotateZ(camth-Math.PI/2)
-  camera.rotateX(0.3);
-  if(escvalue>0)camera.rotateX(-0.3*escvalue);
-  else camera.rotateX(-escvalue)
+  vcam.z=20*Math.pow(2,3*escvalue)
+  vcam.rotz = -Math.PI/2+(escvalue>0 ? 0.3*(1-escvalue) : 0.3-escvalue)
+  vcam.apply(camera);
   plane.position.x=pos.x;
   plane.position.y=pos.y;
 
@@ -591,6 +588,33 @@ renderShader = function(size){
   */
 }
 
+function ViewCamera(option){
+  if(!option)option = {};
+  this.x=option.x||0;
+  this.y=option.y||0;
+  this.z=option.z||0;
+  this.rotxy=option.rotxy||0;
+  this.rotz=option.rotz||0;
+  this.apply = function(camera){
+    camera.position.x=this.x;
+    camera.position.y=this.y;
+    camera.position.z=this.z;
+    camera.setRotationFromAxisAngle({x:1,y:0,z:0},0);
+    camera.rotateZ(this.rotxy-Math.PI/2);
+    camera.rotateX(this.rotz+Math.PI/2);
+  }
+  this.setPosition = function(pos){
+    this.x=pos.x;this.y=pos.y;this.z=pos.z;
+    return this;
+  }
+  this.lookAt = function(pos){
+    var dx=pos.x-this.x,dy=pos.y-this.y,dz=pos.z-this.z;
+    this.rotxy = Math.atan2(dy,dx);
+    var dr=Math.sqrt(dx*dx+dy*dy);
+    this.rotz = Math.atan2(dz, dr);
+    return this;
+  }
+}
 
 </script>
 <style>
