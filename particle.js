@@ -143,3 +143,15 @@ Particle.starMaterial=Particle.materialBase(function(){/*
   pos = vec3(4.0*time*vec2(cos(theta),sin(theta))*(1.0+0.2*sin(5.0*theta)),0.5)+0.2*normal;
   color = 4.0*time*time*(1.0-time)*(1.0-time)*vec3(1.0,0.8,0.6);
 */});
+
+Particle.navigateMaterial=Particle.materialBase(function(){
+/*DEF
+  uniform vec3 dst;
+*/
+/*CODE
+  float t = 1000.0*position.x+time;
+  t = t-floor(t);
+  size = 1.0;
+  pos = t*dst+0.25*position*t*(1.0-t)+0.25*t*t*normal;
+  color = 0.02*t*vec3(1.0,0.8,0.6);
+*/}, {dst: {type: 'v3'}});
