@@ -15,7 +15,10 @@ Particle.System = function(scene){
   var geometries = {};
   this.prepareGeometry = function(n){
     var geom = geometries[n];
-    if(!geom)geom = Particle.geometry(n);
+    if(!geom){
+      geom = Particle.geometry(n);
+      geometries[n] = geom;
+    }
     return geom;
   }
   var windowSize = 800;
