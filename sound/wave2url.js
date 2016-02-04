@@ -148,3 +148,18 @@ function OceanSound(){
     timer = setTimeout(next,400+400*Math.random());
   }
 }
+
+function HitSound(){
+  var audios=[];
+  for(var i=0;i<10;i++){
+    var audio=new Audio();
+    audio.src = wave2url(decaySoundWave(0.8,0.02,180+40*Math.random(),4));
+    audios.push(audio);
+  }
+  this.play=function(vol){
+    if(!vol)vol=0.2;
+    var a=audios.pop();
+    a.volume=vol;a.play();
+    audios.unshift(a);
+  }
+}

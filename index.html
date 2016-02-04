@@ -9,6 +9,7 @@ var width=800,height=600;
 var waveSize=32;
 var wavePixels=256;
 var scale=20;
+hitsound=new HitSound();
 piano=new Piano();
 function resizeView(){
   var w=window.innerWidth;
@@ -302,6 +303,7 @@ function animate(){
   }
   var hits = test();
   if(hits){
+    hitsound.play();
     var dtok=0;
     var dtng=1;
     for(var j=0;j<100;j++){
