@@ -6,7 +6,7 @@
 onload=function(){
   camera = new THREE.Camera();
   scene = new THREE.Scene();
-  plane = new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.MeshBasicMaterial());
+  plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(2,2), new THREE.MeshBasicMaterial());
   plane.material.blending = THREE.NoBlending
   plane.material.blendSrc = THREE.OneFactor
   plane.material.blendDst = THREE.ZeroFactor

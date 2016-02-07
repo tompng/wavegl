@@ -76,7 +76,7 @@ onload=function(){
   undine.meshes.forEach(function(m){scene.add(m)});
   chara.material = mapmaterial;
   scene.add(chara);
-  plane = new THREE.Mesh(new THREE.PlaneGeometry(waveSize*4, waveSize*4), renderShader(wavePixels));
+  plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(waveSize*4, waveSize*4), renderShader(wavePixels));
   plane.material.uniforms.sky.value=sky;
   plane.renderOrder=1;
   scene.add(plane);
