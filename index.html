@@ -12,21 +12,24 @@ var wavePixels=256;
 var scale=20;
 hitsound=new HitSound();
 piano=new Piano();
+if(!window.devicePixelRatio)window.devicePixelRatio=1;
 function resizeView(){
   var w=window.innerWidth;
   var h=window.innerHeight;
   if(w>aspect*h)w=aspect*h;
   else h=w/aspect;
-  width=w;height=h;
+  width=w*devicePixelRatio;height=h*devicePixelRatio;
   renderer.setSize(width, height);
+  renderer.domElement.style.width=w;
+  renderer.domElement.style.height=h;
   renderer.domElement.style.left=(window.innerWidth-w)/2+'px';
   renderer.domElement.style.top=(window.innerHeight-h)/2+'px';
 }
 var floatings = [];
 onload=function(){
   initTouch();
-  width=window.innerWidth;
-  height=window.innerHeight;
+  width=window.innerWidth*devicePixelRatio;
+  height=window.innerHeight*devicePixelRatio;
   camera = new THREE.Camera();
   camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 1000);
   camera.position.z = 4;
@@ -235,7 +238,7 @@ function animate(){
     });
   }
 
-  particleSystem.update((width+height)/2);
+  particleSystem.update(devicePixelRatio*(width+height)/2);
 
   if(floatings.length<32){
     var f=new THREE.Mesh(sphereGeometry,lanternmaterial);
