@@ -3,6 +3,7 @@
 <script src="wave.js"></script>
 <script src="sound/wave2url.js"></script>
 <script src="particle.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script>
 var aspect=4/3;
 var width=800,height=600;
@@ -23,6 +24,7 @@ function resizeView(){
 }
 var floatings = [];
 onload=function(){
+  initTouch();
   width=window.innerWidth;
   height=window.innerHeight;
   camera = new THREE.Camera();
@@ -666,8 +668,65 @@ function ViewCamera(option){
   }
 }
 
+function initTouch(){
+  var YBASE=0.8;
+  apply(0,0);
+  document.ontouchstart=document.ontouchmove=function(e){
+    document.querySelector('.touch-controller').style.display='block';
+    var cx=innerWidth/2;
+    var cy=innerHeight*YBASE;
+    var x=(e.touches&&e.touches[0]&&e.touches[0].pageX)||e.pageX||cx;
+    var y=(e.touches&&e.touches[0]&&e.touches[0].pageY)||e.pageY||cy;
+    var dx=x-cx,dy=cy-y;
+    Mouse.x=x/innerWidth;
+    Mouse.y=y/innerHeight;
+    var rmax=innerHeight/8;
+    var r=Math.sqrt(dx*dx+dy*dy);
+    Mouse.dx=dx/Math.max(r,rmax);
+    Mouse.dy=dy/Math.max(r,rmax);
+    apply(rmax*Mouse.dx,rmax*Mouse.dy);
+    return false;
+  }
+  document.ontouchend=function(){
+    Mouse.x=Mouse.y=0.5;
+    Mouse.dx=Mouse.dy=0;
+    apply(0,0)
+    return false;
+  }
+  function apply(dx,dy){
+    var el = document.querySelector('.touch-controller .target');
+    var base = document.querySelector('.touch-controller .base');
+    base.style.left=(innerWidth/2)+'px'
+    base.style.top=(innerHeight*YBASE)+'px'
+    el.style.left=(innerWidth/2+dx)+'px'
+    el.style.top=(innerHeight*YBASE-dy)+'px'
+  }
+}
 </script>
 <style>
 canvas{position:fixed;left:0;top:0;}
 body{background:black;overflow:hidden;cursor: crosshair;}
+.touch-controller{
+  display:none;
+}
+.touch-controller div{
+  z-index:100;
+  position:fixed;
+  margin-left: -4vh;
+  margin-top: -4vh;
+  width:8vh;height:8vh;
+  background: gray;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-sizing: border-box;
+  opacity:0.2;
+}
+.touch-controller div.target{
+  opacity: 0.3;
+}
 </style>
+
+<div class='touch-controller'>
+  <div class='base'></div>
+  <div class='target'></div>
+</div>
