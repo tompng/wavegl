@@ -3,18 +3,20 @@ function WaveSimulator(size, renderer, pattern) {
   var scene = new THREE.Scene();
   camera.position.z = 1;
   gl = renderer.getContext();
-  if(!gl.getExtension( "OES_texture_float" )) {
-    alert("No OES_texture_float support for float textures!");
+  if(!gl.getExtension('OES_texture_float')){
+    alert('Not supported: OES_texture_float');
   }
+  var floatLinear = gl.getExtension('OES_texture_float_linear');
+  var floatFilter = floatLinear ? THREE.LinearFilter : THREE.NearestFilter;
   var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2));
   scene.add(mesh);
-  var wave0 = createRenderTarget(size,size);
-  var wave1 = createRenderTarget(size,size);
-  this.waveNormal = createRenderTarget(size,size,{type:THREE.UnsignedByteType,filter:THREE.LinearFilter});
+  var wave0 = createRenderTarget(size,size,{type:THREE.FloatType,filter:floatFilter});
+  var wave1 = createRenderTarget(size,size,{type:THREE.FloatType,filter:floatFilter});
+  this.waveNormal = createRenderTarget(size,size);
   var normalShader = WaveSimulator.normalShader(size, pattern);
   var maxStore = 128;
   var store = {
-    target: createRenderTarget(1,maxStore,{type:THREE.UnsignedByteType}),
+    target: createRenderTarget(1,maxStore,{filter:THREE.NearestFilter}),
     array: new Uint8Array(maxStore*4),
     positions: {},
     index: 0,
@@ -36,15 +38,15 @@ function WaveSimulator(size, renderer, pattern) {
     return new THREE.WebGLRenderTarget(w, h, {
       wrapS: THREE.RepeatWrapping,
       wrapT: THREE.RepeatWrapping,
-      minFilter: option.filter || THREE.NearestFilter,
-      magFilter: option.filter || THREE.NearestFilter,
-      format: option.format||THREE.RGBAFormat,
-      type: option.type||THREE.FloatType,
+      minFilter: option.filter || THREE.LinearFilter,
+      magFilter: option.filter || THREE.LinearFilter,
+      format: option.format || THREE.RGBAFormat,
+      type: option.type || THREE.UnsignedByteType,
       stencilBuffer: false,
       depthBuffer: false
     });
   }
-  var waveShader = WaveSimulator.waveShader(size);
+  var waveShader = WaveSimulator.waveShader(size,floatLinear);
   var initShader = WaveSimulator.initShader();
   this.init = function(){
     mesh.material = initShader;
@@ -174,10 +176,12 @@ WaveSimulator.initShader = function(){
     blendDst: THREE.ZeroFactor
   });
 }
-WaveSimulator.waveShader = function(size){
+WaveSimulator.waveShader = function(size,linear){
+  var defs = {SIZE: size.toFixed(2)};
+  if(linear)defs.LINEAR = '1';
   return new THREE.ShaderMaterial({
     uniforms: {wave: {type: "t"}},
-    defines: {SIZE: size.toFixed(2)},
+    defines: defs,
     vertexShader: WaveSimulator.vertexShaderCode,
     fragmentShader: WaveSimulator.shaderCode(arguments.callee, 'FRAG'),
     transparent: true,
@@ -189,6 +193,7 @@ WaveSimulator.waveShader = function(size){
   uniform sampler2D wave;
   const vec2 dx = vec2(1.0/SIZE, 0);
   const vec2 dy = vec2(0, 1.0/SIZE);
+  #ifndef LINEAR
   vec4 fetch(vec2 uv){
     vec2 p = SIZE*uv;
     vec2 ip = floor(p);
@@ -198,16 +203,22 @@ WaveSimulator.waveShader = function(size){
     texture2D(wave, ip/SIZE+dy)*(1.0-d.x)*d.y+
     texture2D(wave, ip/SIZE+dx+dy)*d.x*d.y;
   }
+  #endif
   void main(){
     vec2 coord = gl_FragCoord.xy/SIZE;
-    coord = coord + (texture2D(wave,coord).xy-vec2(0.5,0.5))/SIZE-(dx+dy)/2.0;
+    coord = coord + (texture2D(wave,coord).xy-vec2(0.5,0.5))/SIZE;
+    #ifndef LINEAR
+    coord = coord - 0.5*(dx+dy);
     vec4 uvh = fetch(coord);
-    vec4 uvhx0 = fetch(coord-dx);
-    vec4 uvhx1 = fetch(coord+dx);
-    vec4 uvhy0 = fetch(coord-dy);
-    vec4 uvhy1 = fetch(coord+dy);
-    vec4 uvhdx = (uvhx1-uvhx0);
-    vec4 uvhdy = (uvhy1-uvhy0);
+    vec4 uvhx0 = fetch(coord-dx), uvhx1 = fetch(coord+dx);
+    vec4 uvhy0 = fetch(coord-dy), uvhy1 = fetch(coord+dy);
+    #endif
+    #ifdef LINEAR
+    vec4 uvh = texture2D(wave, coord);
+    vec4 uvhx0 = texture2D(wave,coord-dx), uvhx1 = texture2D(wave,coord+dx);
+    vec4 uvhy0 = texture2D(wave,coord-dy), uvhy1 = texture2D(wave,coord+dy);
+    #endif
+    vec4 uvhdx = uvhx1-uvhx0, uvhdy = uvhy1-uvhy0;
     vec4 diff = vec4(
       4.0*uvhdx.z,
       4.0*uvhdy.z,
