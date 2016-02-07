@@ -28,7 +28,7 @@ function wave2url(data){
     file[header.length+2*i+1]=x>>8;
   }
   window.header=header;
-  var blob=new Blob([file]);
+  var blob=new Blob([file],{type: 'audio/wav'});
   window.file=file;
   return URL.createObjectURL(blob);
 }
