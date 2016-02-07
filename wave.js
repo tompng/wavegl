@@ -16,7 +16,7 @@ function WaveSimulator(size, renderer, pattern) {
   var store = {
     target: createRenderTarget(1,maxStore,{type:THREE.UnsignedByteType}),
     array: new Uint8Array(maxStore*4),
-    position: {},
+    positions: {},
     index: 0,
     max: maxStore
   }
@@ -93,14 +93,29 @@ function WaveSimulator(size, renderer, pattern) {
     wave0 = wave1;
     wave1 = this.wave;
 
-    mesh.material = normalShader;
-    normalShader.uniforms.wave.value = wave1;
-    if(pattern)normalShader.uniforms.time.value = performance.now()/1000;
-    renderer.render(scene, camera, this.waveNormal);
+    this.genWaveNormal();
 
     mesh.material = waveShader;
     waveShader.uniforms.wave.value = wave0;
     renderer.render(scene, camera, wave1);
+  }
+  this.genWaveNormal = function(){
+    mesh.material = normalShader;
+    normalShader.uniforms.wave.value = wave1;
+    if(pattern)normalShader.uniforms.time.value = performance.now()/1000;
+    renderer.render(scene, camera, this.waveNormal);
+  }
+  this.calc();
+  this.storePixel('test',0,0);
+  this.storeDone();
+  this.storeLoad();
+  var test = this.readStoredPixel('test');
+  if(Math.abs(test.vx)>0.5||Math.abs(test.vy)>0.5||Math.abs(test.h)>0.5){
+    alert('cannot calculate wave on this device');
+    this.storePixel=function(){}
+    this.storeDone=function(){}
+    this.storeLoad=function(){}
+    this.calc=this.genWaveNormal;
   }
 }
 WaveSimulator.shaderCode = function(func, name, ignore){
