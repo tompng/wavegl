@@ -395,8 +395,8 @@ function animate(){
   var rotscale=4*dist*pos.rot;
   var vf={x:pos.vx-rotscale*Math.sin(pos.th),y:pos.vy+rotscale*Math.cos(pos.th)};
   var vb={x:pos.vx+rotscale*Math.sin(pos.th),y:pos.vy-rotscale*Math.cos(pos.th)};
-  charawavef2.material.uniforms.value.value=new THREE.Vector4(0.5-4*vf.x,0.5-4*vf.y,0,1);
-  charawaveb2.material.uniforms.value.value=new THREE.Vector4(0.5-4*vb.x,0.5-4*vb.y,0,1);
+  charawavef2.material.uniforms.value.value=new THREE.Vector4(0.5-2*vf.x,0.5-2*vf.y,0,1);
+  charawaveb2.material.uniforms.value.value=new THREE.Vector4(0.5-2*vb.x,0.5-2*vb.y,0,1);
 
   itemWaveShader2.uniforms.value.value.z=0.5+0.1*Math.sin(4*time);
 
