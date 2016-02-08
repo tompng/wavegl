@@ -336,6 +336,10 @@ WaveSimulator.normalShader = function(size, pattern, unsignedbytewave){
     vec2 hay1 = texture2D(wave,coord+dy).zw;
     #endif
     vec2 norm = 32.0*vec2(hax1.x-hax0.x,hay1.x-hay0.x);
+    vec2 zw = 0.25*(hax0+hax1+hay0+hay1);
+    #ifdef UNSIGNEDBYTEWAVE
+    zw.x = 0.5;
+    #endif
     #ifdef PATTERN
     norm = norm+0.25*(
       +texture2D(pattern, 3.0*coord+time*vec2(0.22,0.0)).xy
@@ -344,7 +348,7 @@ WaveSimulator.normalShader = function(size, pattern, unsignedbytewave){
       -vec2(1.5,1.5)
     );
     #endif
-    gl_FragColor = vec4(vec2(0.5,0.5)+norm, 0.25*(hax0+hax1+hay0+hay1));
+    gl_FragColor = vec4(vec2(0.5,0.5)+norm, 4.0*(zw.x-0.5)+0.5, zw.y);
   }
   */
 }

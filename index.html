@@ -80,7 +80,7 @@ onload=function(){
   undine.meshes.forEach(function(m){scene.add(m)});
   chara.material = mapmaterial;
   scene.add(chara);
-  plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(waveSize*4, waveSize*4), renderShader(wavePixels));
+  plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(waveSize*2, waveSize*2, 128, 128), renderShader(wavePixels));
   plane.material.uniforms.sky.value=sky;
   plane.renderOrder=1;
   scene.add(plane);
@@ -615,9 +615,12 @@ renderShader = function(size){
   });
   /*VERT
   varying vec2 xyposition;
+  uniform sampler2D wave;
+  uniform float size;
   void main(){
     xyposition = (modelMatrix * vec4(position,1)).xy;
-    gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1);
+    float z = texture2D(wave,xyposition/size).z-0.5;
+    gl_Position=projectionMatrix*modelViewMatrix*vec4(position.xy, 2.5*z, 1);
   }
   */
   /*FRAG
