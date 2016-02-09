@@ -352,10 +352,11 @@ function WaterwayChunk(i,j,n,scale,scene,wavescene){
     scene.remove(this.mesh);
     scene.remove(this.roof);
   }
-  this.update = function(pos){
+  this.update = function(pos,itemz){
     var hitItems = []
     this.items.forEach(function(item){
       if(item.dead)return;
+      item.position.z=itemz;
       item.rotateX(0.01);
       item.rotateY(0.01);
       item.rotateZ(0.01);
