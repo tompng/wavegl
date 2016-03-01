@@ -18,6 +18,10 @@ function resizeView(){
   var h=window.innerHeight;
   var aspect=w/h;
   width=w*devicePixelRatio;height=h*devicePixelRatio;
+  if(width>1024||height>1024){
+    var scale=Math.min(1024/width,1024/height);
+    width*=scale;height*=scale;
+  }
   renderer.setSize(width, height);
   renderer.domElement.style.width=w;
   renderer.domElement.style.height=h;
@@ -235,7 +239,7 @@ function animate(){
     });
   }
 
-  particleSystem.update(devicePixelRatio*(width+height)/2);
+  particleSystem.update((width+height)/2);
 
   if(floatings.length<32){
     var f=new THREE.Mesh(sphereGeometry,lanternmaterial);
@@ -423,7 +427,7 @@ function animate(){
   var wcamera = new THREE.OrthographicCamera(0,waveSize-cpi.x*waveSize/wavePixels,waveSize-cpi.y*waveSize/wavePixels,0,-1000,1000);
   wcamera.position.x=cornerPos.x*waveSize/wavePixels-waveSize;
   wcamera.position.y=cornerPos.y*waveSize/wavePixels-waveSize;
-  renderer.render(wavescene, wcamera, simulator.wave);  
+  renderer.render(wavescene, wcamera, simulator.wave);
 
   renderer.setViewport(0,0,width,height)
 
