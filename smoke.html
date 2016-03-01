@@ -174,7 +174,7 @@ function smokeShader(){
   uniform sampler2D wave;
   void main(){
     vec4 uvha=texture2D(wave,coord);
-    gl_FragColor.rgb = uvha.a*vec3(1,0.5,0.2);
+    gl_FragColor.rgb = uvha.a*vec3(2,1,0.5);
     gl_FragColor.a = 1.0;
   }
   */
