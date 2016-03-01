@@ -279,7 +279,8 @@ WaveSimulator.waveShader = function(size, linear){
     vec4 av = (uvhx0+uvhx1+uvhy0+uvhy1)/4.0;
     vec4 outvec = 0.7*uvh+0.3*av + 0.2*diff;
     outvec.a = uvh.a;
-    gl_FragColor = clamp(0.5+(outvec-0.5)*0.9999, vec4(0,0,0,0), vec4(1,1,1,1));
+    gl_FragColor.xyz = clamp(0.5+(outvec.xyz-0.5)*0.9999, vec3(0,0,0), vec3(1,1,1));
+    gl_FragColor.a = clamp(outvec.a*0.9999,0.0,1.0);
   }
   */
 }
