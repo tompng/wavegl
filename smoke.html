@@ -105,7 +105,7 @@ onload=function(){
     }
     renderer.autoClear=false;
     renderer.render(wavescene, camera, simulator.wave);
-    simulator.calc();
+    for(var i=0;i<4;i++)simulator.calc();
     plane.material.wave=simulator.wave;
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
@@ -153,8 +153,6 @@ function circleShader(){
   }
   */
 }
-
-
 
 function smokeShader(){
   return new THREE.ShaderMaterial({
