@@ -12,9 +12,14 @@ var pointables=[],hands=[];
 function leapInit(){
   ws = new WebSocket("wss://127.0.0.1:6436/v4.json");
   ws.onerror=function(){
-    alert('unable to connect to leapmotion');
+    ws2 = new WebSocket("ws://127.0.0.1:6437/v4.json");
+    ws2.onopen=ws.onopen;
+    ws2.onmessage=ws.onmessage;
+    ws2.onerror=function(){
+      alert('unable to connect to leapmotion');
+    }
   }
-  ws.onopen = function(event) {ws.send(JSON.stringify({background: true, enableGestures: true}));};
+  ws.onopen = function(event){this.send(JSON.stringify({background: true, enableGestures: true}));};
   ws.onmessage = function(event){
     var obj = JSON.parse(event.data);
     if(obj.id){
